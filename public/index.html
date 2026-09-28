@@ -1,3 +1,9 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html,body{margin:0}</style>
 <title>Zdravotná sieť Slovenska</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -156,6 +162,9 @@ table.flow tr:hover td{background:inherit}
 table.flow tr.sel th.rh{color:var(--ink);font-weight:700}
 table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight:600}
 </style>
+</head>
+<body>
+
 
 <div class="wrap">
   <nav class="top" aria-label="Nastavenia">
@@ -515,3 +524,6 @@ function select(k){ st.sel = st.sel===k ? null : k; renderAll(); }
 function renderAll(){ renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
 renderAll();
 </script>
+
+</body>
+</html>

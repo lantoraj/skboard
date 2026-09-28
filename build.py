@@ -244,9 +244,14 @@ def main():
     dx = diagnoses()
     data = {"groups": groups, "stats": stats, "hosp": hosp, "shapes": shapes(), "years": years,
             "hs": hs, "popY": pop, "flows": flows, "chn": chn, "dg": dg, "dx": dx, "hyears": sorted(pop)}
-    html = (ROOT / "template.html").read_text().replace("__DATA__", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+    page = (ROOT / "template.html").read_text(encoding="utf-8").replace("__DATA__", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+    # template.html is an artifact body; a standalone host needs the document shell (charset!) around it
+    head_end = page.index("</style>") + len("</style>")
+    html = ('<!doctype html>\n<html lang="sk">\n<head>\n<meta charset="utf-8">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+            '<style>html,body{margin:0}</style>\n' + page[:head_end] + "\n</head>\n<body>\n" + page[head_end:] + "\n</body>\n</html>\n")
     (ROOT / "public").mkdir(exist_ok=True)
-    (ROOT / "public" / "index.html").write_text(html)
+    (ROOT / "public" / "index.html").write_text(html, encoding="utf-8")
     print(f"public/index.html: {len(html) // 1024} kB, years {years[0]}–{years[-1]} / {sorted(pop)[0]}–{sorted(pop)[-1]}, {len(hosp)} hospitals")
 
 
