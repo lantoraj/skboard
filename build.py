@@ -237,13 +237,116 @@ def diagnoses():
     return out
 
 
+TECH = {"laparoskopicky": "laparoskopicky", "roboticky": "roboticky", "otvorene": "otvorene", "klasicky": "klasicky", "laparotomicky": "laparotomicky"}
+
+
+def surgery():
+    """NCZI surgical statistics 2013+: operations (P02), day surgery (J01), surgical outpatient clinics (A12)."""
+    src = DATA / "nczi_chirurgia"
+    terr = [SR] + [k + " kraj" for k in KR]
+    ti = lambda s: terr.index(str(s).strip()) if str(s).strip() in terr else -1
+    nz = lambda s: pd.to_numeric(s, errors="coerce").fillna(0)
+
+    op = pd.read_excel(src / "P02_2013_2024_dataset.xlsx", sheet_name="SUM_3602_OZ")
+    op["t"] = op.UZEMIE_POPIS.map(ti)
+    op = op[op.t >= 0]
+    for c in ["OPER_0018", "OPER_19", "P_OPER_0018", "P_OPER_19", "P_OPER_UMR_0018", "P_OPER_UMR_19"]:
+        op[c] = nz(op[c])
+    op["n"] = op.OPER_0018 + op.OPER_19
+    op["pat"] = op.P_OPER_0018 + op.P_OPER_19
+    op["umr"] = op.P_OPER_UMR_0018 + op.P_OPER_UMR_19
+    op["y"] = op.ROK_SPRAC.astype(str)
+    op["g"] = op.CISV_OPERACIE_1.astype(str).str.zfill(2)
+    op["o"] = op.CISV_OPERACIE_2.astype(str)
+    years = sorted(op.y.unique())
+    last = years[-1]
+
+    def terr_series(df):
+        out = {}
+        for (y, t), n in df.groupby(["y", "t"]).n.sum().items():
+            out.setdefault(y, [0] * 9)[t] = int(n)
+        return out
+
+    def sr_series(df):
+        s = df[df.t == 0].groupby("y")[["pat", "umr", "OPER_0018"]].sum()
+        return {y: [int(r.pat), int(r.umr), int(r.OPER_0018)] for y, r in s.iterrows()}
+
+    groups = {g: {"n": " ".join(str(s.CISV_OPERACIE_1_POP.iloc[-1]).split()), "t": terr_series(s), "sr": sr_series(s)} for g, s in op.groupby("g")}
+    ops = {}
+    for o, s in op.groupby("o"):
+        dep = {}
+        for (d, t), n in s[s.y == last].groupby(["ODB_ZAM_UTV_POPIS", "t"]).n.sum().items():
+            if n:
+                dep.setdefault(str(d).strip(), [0] * 9)[t] = int(n)
+        ops[o] = {"n": " ".join(str(s.CISV_OPERACIE_2_POP.iloc[-1]).split()), "g": s.g.iloc[-1], "t": terr_series(s), "sr": sr_series(s), "dep": dep}
+    tech = {}
+    for o, v in ops.items():
+        parts = v["n"].rsplit(" - ", 1)
+        if len(parts) == 2 and parts[1].strip() in TECH:
+            tech.setdefault(parts[0], []).append([o, TECH[parts[1].strip()]])
+    tech = [{"base": b, "g": ops[items[0][0]]["g"], "items": sorted(items, key=lambda i: i[1])} for b, items in tech.items() if len(items) >= 2]
+
+    em = pd.read_excel(src / "P02_2013_2024_dataset.xlsx", sheet_name="SUM_3234")
+    em["t"] = em.UZEMIE_POPIS.map(ti)
+    em = em[em.t >= 0]
+    for c in ["P_OPER_0_5H", "P_OPER_6H", "P_OPER_0_5H_UMR", "P_OPER_6H_UMR"]:
+        em[c] = nz(em[c])
+    em["umr"] = em.P_OPER_0_5H_UMR + em.P_OPER_6H_UMR
+    em["c"] = em.CISV_CHIR_NEODKL_2.astype(str).str.zfill(4)
+    ecats = {c: " ".join(str(s.CISV_CHIR_NEODKL_2_P.iloc[-1]).split()) for c, s in em.groupby("c")}
+    emd = {}
+    for (y, c, t), s in em.groupby([em.ROK_SPRAC.astype(str), "c", "t"]):
+        a = emd.setdefault(y, {}).setdefault(c, [0] * 27)
+        a[3 * t:3 * t + 3] = [int(s.P_OPER_0_5H.sum()), int(s.P_OPER_6H.sum()), int(s.umr.sum())]
+
+    jp = pd.read_excel(src / "J01_2013_2024_dataset.xlsx", sheet_name="SUM_2301")
+    places = {}
+    for r in jp.itertuples(index=False):
+        t = ti(r.UZEMIE_POPIS)
+        if t >= 0:
+            places.setdefault(str(r.ROK_SPRAC), [0] * 9)[t] = int(nz(pd.Series([r.MIES_P]))[0])
+    jv = pd.read_excel(src / "J01_2013_2024_dataset.xlsx", sheet_name="SUM_3602_OZ")
+    jv["t"] = jv.UZEMIE_POPIS.map(ti)
+    jv = jv[jv.t >= 0]
+    jv["n"] = nz(jv.P_OPE_0018) + nz(jv.P_OPE_19)
+    jv["y"] = jv.ROK_SPRAC.astype(str)
+    jv["cat"] = jv.CISV_J1_1_POPIS.where(jv.CISV_J1_1_POPIS.notna(), jv.CIS_VYK_J1_DRG_SK1_P).astype(str).map(lambda s: " ".join(s.replace("\xa0", " ").split()))
+    jtot, jcat = terr_series(jv), {}
+    for (y, c, t), n in jv.groupby(["y", "cat", "t"]).n.sum().items():
+        if n:
+            jcat.setdefault(y, {}).setdefault(c, [0] * 9)[t] = int(n)
+
+    am = pd.read_excel(src / "A12_2013_2024_dataset.xlsx", sheet_name="SUM_3101-3602")
+    labels = pd.read_excel(src / "A12_2013_2024_dataset.xlsx", sheet_name="Struktura_datasetu").set_index("Kód položky")["Názov položky"]
+    bases = []
+    for c in am.columns:
+        if c.startswith(("NAV_", "VYK_")) and not c.endswith(("_0018", "_00")):
+            base = c[: -len("_19")]
+            kid = next(k for k in am.columns if k.startswith(base + "_") and k != c)
+            nm = re.sub(r"\s*(u pacientov\s*)?vo veku.*$", "", str(labels[c])).replace("Chirurgických výkonov pre ", "").replace("Počet chirurgických výkonov pre ", "").replace("Počet výkonov - ", "").replace("Počet výkonov pre ", "").replace("Počet ", "")
+            bases.append((c, kid, nm[0].upper() + nm[1:]))
+    amd = {}
+    for r in am.to_dict("records"):
+        t = ti(r["UZEMIE_POPIS"])
+        if t < 0:
+            continue
+        a = amd.setdefault(str(r["ROK_SPRAC"]), [0] * (9 * len(bases)))
+        for i, (c, kid, _) in enumerate(bases):
+            v = sum(float(x) for x in (r[c], r[kid]) if pd.notna(x))
+            a[i * 9 + t] = int(v)
+    return {"years": years, "groups": groups, "ops": ops, "tech": tech, "last": last,
+            "em": {"cats": ecats, "d": emd}, "jzs": {"places": places, "tot": jtot, "cat": jcat},
+            "amb": {"labels": [b[2] for b in bases], "d": amd}}
+
+
 def main():
     stats, years = network()
     hosp, groups = hospitals()
     hs, pop, flows, chn, dg = hospitalizations()
     dx = diagnoses()
+    sx = surgery()
     data = {"groups": groups, "stats": stats, "hosp": hosp, "shapes": shapes(), "years": years,
-            "hs": hs, "popY": pop, "flows": flows, "chn": chn, "dg": dg, "dx": dx, "hyears": sorted(pop)}
+            "hs": hs, "popY": pop, "flows": flows, "chn": chn, "dg": dg, "dx": dx, "sx": sx, "hyears": sorted(pop)}
     page = (ROOT / "template.html").read_text(encoding="utf-8").replace("__DATA__", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     # template.html is an artifact body; a standalone host needs the document shell (charset!) around it
     head_end = page.index("</style>") + len("</style>")

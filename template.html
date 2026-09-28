@@ -136,6 +136,17 @@ ul.notes{margin:0;padding-left:18px;color:var(--ink2);font-size:13px;display:fle
 .dgrow .fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--violet)}
 .dgrow .meta{grid-column:1/-1;font:11px var(--mono);color:var(--muted);margin-top:-4px}
 .flowbox{overflow-x:auto}
+[hidden]{display:none!important}
+.view{display:flex;flex-direction:column;gap:18px}
+.tabs{margin-right:auto}
+.tabs button{font-weight:600}
+.techrow{display:flex;flex-direction:column;gap:6px;padding:8px 0;border-bottom:1px solid var(--hair)}
+.techrow:last-child{border-bottom:0}
+.techhd{display:flex;justify-content:space-between;gap:12px;font-size:13px}
+.techhd .v{font:500 13px var(--mono)}
+.techrow .meta{font:11px var(--mono);color:var(--muted)}
+table.emt{min-width:0}
+table.emt td,table.emt th{padding:8px 6px}
 .tfilter{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
 .tfilter input,.tfilter select{font:14px var(--sans);color:var(--ink);background:var(--tile);border:1px solid var(--hair);border-radius:999px;padding:9px 16px;min-width:0}
 .tfilter input{flex:1 1 280px}
@@ -165,12 +176,15 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
 <div class="wrap">
   <nav class="top" aria-label="Nastavenia">
     <div class="brand"><span class="badge">SK</span>Zdravotná sieť</div>
+    <div class="pills tabs" role="group" aria-label="Pohľad" id="tabs"><button type="button" data-tab="main">Prehľad</button><button type="button" data-tab="chir">Chirurgia</button></div>
     <div class="topr">
-      <div class="selwrap"><label for="spec" style="position:absolute;left:-9999px">Odbornosť</label><select id="spec" class="specsel"></select></div>
-      <div class="selwrap dx"><label for="dx" style="position:absolute;left:-9999px">Diagnóza</label><select id="dx" class="specsel dxsel"></select></div>
+      <div class="selwrap" id="specWrap"><label for="spec" style="position:absolute;left:-9999px">Odbornosť</label><select id="spec" class="specsel"></select></div>
+      <div class="selwrap dx" id="dxWrap"><label for="dx" style="position:absolute;left:-9999px">Diagnóza</label><select id="dx" class="specsel dxsel"></select></div>
+      <div class="selwrap dx" id="opWrap" hidden><label for="opSel" style="position:absolute;left:-9999px">Operácia</label><select id="opSel" class="specsel dxsel"></select></div>
       <div class="pills" role="group" aria-label="Rok" id="yearSeg"></div>
     </div>
   </nav>
+<div id="view-main" class="view">
 
   <header class="hero">
     <div>
@@ -255,6 +269,91 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
   </section>
 </div>
 
+<div id="view-chir" class="view" hidden>
+  <header class="hero">
+    <div>
+      <div class="cap"><span class="dot"></span>NCZI · chirurgická a jednodňová starostlivosť</div>
+      <h1 id="c_h1"></h1>
+      <p class="tag" id="c_tag"></p>
+    </div>
+    <p class="lead">Operácie na lôžkových pracoviskách, jednodňová chirurgia, neodkladné operácie a chirurgické ambulancie 2013–2024, podľa sídla zariadenia. Vyberte operáciu hore alebo v zozname, potom kliknite na kraj.</p>
+  </header>
+
+  <section class="kpis" id="c_kpis" aria-label="Súhrn chirurgie"></section>
+
+  <div class="main">
+    <section class="card mapbox" aria-label="Mapa operácií">
+      <div class="cardhead"><div><h2 id="c_mapTitle"></h2><p class="note" id="c_mapNote" style="margin:4px 0 0"></p></div></div>
+      <div class="pills" role="group" aria-label="Ukazovateľ" id="c_metric" style="margin-bottom:12px"></div>
+      <div class="maptile"><svg id="c_map" viewBox="-12 -6 748 380" role="img" aria-labelledby="c_mapTitle"></svg></div>
+      <div class="legend" id="c_legend"></div>
+      <div class="tip" id="c_tip" hidden></div>
+    </section>
+    <aside class="card side" id="c_side" aria-live="polite"></aside>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Rebríček <em>krajov</em></h2><p class="note" id="c_rankNote" style="margin:4px 0 0"></p></div></div>
+      <div class="bars" id="c_bars"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Vývoj <em>operácií</em></h2><p class="note" id="c_trendNote" style="margin:4px 0 0"></p></div><div class="legend" id="c_trendLegend" style="margin:4px 0 0"></div></div>
+      <div style="position:relative"><svg id="c_trend" viewBox="0 0 460 260" style="width:100%;height:auto;display:block"></svg><div class="tip" id="c_tip2" hidden></div></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2 id="c_opTitle"></h2><p class="note" id="c_opNote" style="margin:4px 0 0"></p></div><button class="linkbtn" id="c_opUp" hidden>Vyššia úroveň</button></div>
+      <div class="dg" id="c_ops"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Technika <em>operácie</em></h2><p class="note" id="c_techNote" style="margin:4px 0 0"></p></div>
+        <div class="legend" style="margin:4px 0 0"><span><i style="background:var(--violet)"></i>laparoskopicky</span><span><i style="background:var(--lime);box-shadow:0 0 0 1px rgba(11,11,14,.2)"></i>roboticky</span><span><i style="background:var(--ink)"></i>otvorene / klasicky</span></div></div>
+      <div class="tech" id="c_tech"></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Kto <em>operuje</em></h2><p class="note" id="c_depNote" style="margin:4px 0 0"></p></div></div>
+      <div class="dg" id="c_dep"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Jednodňová <em>chirurgia</em></h2><p class="note" id="c_jzsNote" style="margin:4px 0 0"></p></div></div>
+      <div class="agesum" id="c_jzsSum" style="margin:0 0 14px"></div>
+      <div class="dg" id="c_jzs"></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Neodkladná <em>chirurgia</em></h2><p class="note" id="c_emNote" style="margin:4px 0 0"></p></div></div>
+      <div class="tablebox"><table class="emt" id="c_em"></table></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Chirurgické <em>ambulancie</em></h2><p class="note" id="c_ambNote" style="margin:4px 0 0"></p></div></div>
+      <div class="agesum" id="c_ambSum" style="margin:0 0 14px"></div>
+      <div class="dg" id="c_amb"></div>
+    </section>
+  </div>
+
+  <section style="padding-inline:4px">
+    <h2 style="margin-bottom:10px">Metodika <em>chirurgie</em></h2>
+    <ul class="notes">
+      <li>Zdroj: NCZI, štatistické zisťovania P02 (operácie na lôžkových chirurgických pracoviskách, modul 3602; neodkladná chirurgická pomoc, modul 3234), J01 (jednodňová zdravotná starostlivosť) a A12 (chirurgické ambulancie), 2013–2024. Kraj = sídlo zariadenia.</li>
+      <li>Operácie = celkový počet operácií (deti 0–18 aj dospelí). Operovaní pacienti, úmrtia a podiel detí sú dostupné len za celé Slovensko.</li>
+      <li>Číselník operácií sa v roku 2015 rozšíril zo 241 na viac ako 400 položiek. Jednotlivé operácie sú preto porovnateľné až od roku 2015; skupiny a súčty aj za 2013–2014.</li>
+      <li>Jednodňová chirurgia: od roku 2023 sú výkony triedené podľa katalógu DRG, predtým podľa zoznamu výkonov JZS. Štruktúra výkonov medzi rokmi 2022 a 2023 nie je porovnateľná, súčty áno.</li>
+      <li>„Kto operuje“ zobrazuje odborné zameranie oddelenia za posledný rok (2024).</li>
+      <li>Prepočet na obyvateľov používa priemerný stav obyvateľstva NCZI; pre roky 2013–2019 stav z roku 2020.</li>
+      <li>Výsledky závisia od návratnosti výkazov od spravodajských jednotiek; roky 2020–2021 ovplyvnila pandémia COVID-19.</li>
+    </ul>
+  </section>
+</div>
+</div>
+
 <script>
 const D = __DATA__;
 const KR = ["Bratislavský","Trnavský","Trenčiansky","Nitriansky","Žilinský","Banskobystrický","Prešovský","Košický"];
@@ -266,7 +365,7 @@ const TYP = [["nem","Nemocnica","var(--ink)"],["pol","Poliklinika","var(--violet
 const nf = new Intl.NumberFormat("sk-SK");
 const f0 = v => v==null||isNaN(v) ? "–" : nf.format(Math.round(v)), f1 = v => v==null||isNaN(v) ? "–" : v.toLocaleString("sk-SK",{minimumFractionDigits:1,maximumFractionDigits:1});
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}};
+let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}, tab:"main", cy:D.sx.last, op:null, cm:"p"};
 const grp = () => D.groups.find(g=>g.id===st.g);
 const ch = () => grp().ch;
 const chName = () => ch()==="ALL" ? "Všetky diagnózy" : D.chn[ch()].replace(/^[IVX]+\.\s*/,"") + (RANGE[ch()]?` (${RANGE[ch()]})`:"");
@@ -308,8 +407,8 @@ const M = {
 };
 const ZMAP={hosp:"zp",alos:"zl",mort:"zm",age:"zp",hchg:"zchg"};
 const resOk = () => !st.d || (st.d.t==="ch" && ch()==="ALL");
-try{ const s=JSON.parse(localStorage.getItem("sietSK2")||"{}"); if(D.groups.some(g=>g.id===s.g)) st.g=s.g; if(M[s.m]) st.m=s.m; if(HY.includes(s.y)) st.y=s.y; if(s.d&&D.dx[s.d.t]?.[s.d.id]) st.d=s.d; if(!resOk()&&ZMAP[st.m]) st.m=ZMAP[st.m]; }catch(e){}
-const save=()=>{try{localStorage.setItem("sietSK2",JSON.stringify({g:st.g,m:st.m,y:st.y,d:st.d}))}catch(e){}};
+try{ const s=JSON.parse(localStorage.getItem("sietSK2")||"{}"); if(D.groups.some(g=>g.id===s.g)) st.g=s.g; if(M[s.m]) st.m=s.m; if(HY.includes(s.y)) st.y=s.y; if(s.d&&D.dx[s.d.t]?.[s.d.id]) st.d=s.d; if(s.tab==="chir") st.tab="chir"; if(D.sx.years.includes(s.cy)) st.cy=s.cy; if(s.op&&(s.op.t==="g"?D.sx.groups:D.sx.ops)[s.op.id]) st.op=s.op; if(["p","n","chg"].includes(s.cm)) st.cm=s.cm; if(!resOk()&&ZMAP[st.m]) st.m=ZMAP[st.m]; }catch(e){}
+const save=()=>{try{localStorage.setItem("sietSK2",JSON.stringify({g:st.g,m:st.m,y:st.y,d:st.d,tab:st.tab,cy:st.cy,op:st.op,cm:st.cm}))}catch(e){}};
 const my = () => M[st.m].years ? nearest(M[st.m].years, st.y) : st.y;
 const val = k => M[st.m].get(k, my());
 const srVal = () => M[st.m].srAvg ? M[st.m].srAvg() : M[st.m].get(SR, my());
@@ -525,7 +624,234 @@ const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 document.getElementById("onlyProg").onchange=renderTable;
 document.getElementById("hq").oninput=renderTable;
 document.getElementById("clearSel").onclick=()=>select(null);
+
+/* ---------- Chirurgia ---------- */
+const SX = D.sx, CY = SX.years, CBASE = "2019";
+const TECHC = {laparoskopicky:"var(--violet)", roboticky:"var(--lime)", otvorene:"var(--ink)", klasicky:"var(--ink)", laparotomicky:"var(--ink)"};
+const CTOT = (() => { const t={}, sr={}; for(const g of Object.values(SX.groups)){ for(const [y,a] of Object.entries(g.t)){ t[y]=t[y]||Array(9).fill(0); a.forEach((v,i)=>t[y][i]+=v); } for(const [y,a] of Object.entries(g.sr)){ sr[y]=sr[y]||[0,0,0]; a.forEach((v,i)=>sr[y][i]+=v); } } return {n:"Všetky operácie", t, sr}; })();
+const cObj = () => !st.op ? CTOT : st.op.t==="g" ? SX.groups[st.op.id] : SX.ops[st.op.id];
+const cName = () => cObj()?.n || "Všetky operácie";
+const cPop = (k,y) => popOf(k, y < HY[0] ? HY[0] : nearest(HY,y));
+const cCnt = (k,y,o=cObj()) => o?.t?.[y] ? o.t[y][TI(k)] : null;
+const cF = v => v==null||isNaN(v) ? "–" : Math.abs(v)>=100 ? f0(v) : f1(v);
+const cBaseYear = () => { const o=cObj(); return ["2015",...CY].find(y=>o?.t?.[y]) ; };
+const CM = {
+  p:{label:"Na 100 tis. ob.", long:"Operácie na 100 tis. obyvateľov", title:["Operácie","na 100 000 obyvateľov"], fmt:cF, get:(k,y)=>{const n=cCnt(k,y);return n==null?null:n/cPop(k,y)*1e5;}},
+  n:{label:"Počet", long:"Počet operácií", title:["Počet","operácií"], fmt:f0, get:(k,y)=>cCnt(k,y)},
+  chg:{label:"Zmena od 2015", long:"Zmena počtu operácií", title:["Zmena","počtu operácií"], fmt:v=>v==null?"–":(v>0?"+":"")+f0(v)+" %", div:true, get:(k,y)=>{const b=cBaseYear(), a=cCnt(k,b), n=cCnt(k,y); return a&&n!=null&&b!==y?(n/a-1)*100:null;}}
+};
+const cVal = k => CM[st.cm].get(k, st.cy);
+const cSr = () => CM[st.cm].get(SR, st.cy);
+function cColor(v, vals){
+  if(v==null) return "var(--mid)";
+  if(CM[st.cm].div){ if(Math.abs(v)<5) return "var(--mid)"; if(v<0) return v<-15?"var(--n2)":"var(--n1)"; return v>35?"var(--p2)":"var(--p1)"; }
+  const vv=vals.filter(x=>x!=null), lo=Math.min(...vv), hi=Math.max(...vv), t=hi===lo?0:(v-lo)/(hi-lo);
+  return "var(--v"+Math.min(5,1+Math.floor(t*5))+")";
+}
+function setOp(o){ st.op=o; save(); renderAll(); }
+const cKids = () => { const s=st.op;
+  if(!s) return Object.entries(SX.groups).map(([g,o])=>({t:"g",id:g,o}));
+  const g = s.t==="g" ? s.id : SX.ops[s.id].g;
+  return Object.entries(SX.ops).filter(([,o])=>o.g===g).map(([id,o])=>({t:"o",id,o}));
+};
+function tipAt(tip, box, e, html, w=250){ const r=box.getBoundingClientRect(); tip.hidden=false; tip.innerHTML=html; let x=e.clientX-r.left+14; if(x+w>r.width) x=e.clientX-r.left-w-10; tip.style.left=x+"px"; tip.style.top=(e.clientY-r.top+14)+"px"; }
+const clickable = (el, fn) => { el.onclick=fn; el.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fn(); } }; };
+
+function renderChirControls(){
+  const sel=document.getElementById("opSel"), y=st.cy, vol=o=>o?.t?.[y]?.[0]||0;
+  let h=`<option value="">Všetky operácie</option>`;
+  for(const [g,o] of Object.entries(SX.groups).filter(([,o])=>vol(o)).sort((a,b)=>vol(b[1])-vol(a[1]))){
+    const ops=Object.entries(SX.ops).filter(([id,x])=>x.g===g&&(vol(x)||(st.op?.id===id))).sort((a,b)=>vol(b[1])-vol(a[1]));
+    h+=`<optgroup label="${esc(o.n)}"><option value="g:${g}">Celá skupina · ${esc(o.n)}</option>${ops.map(([id,x])=>`<option value="o:${id}">${esc(x.n)}</option>`).join("")}</optgroup>`;
+  }
+  sel.innerHTML=h; const cur=st.op?`${st.op.t}:${st.op.id}`:""; if(cur&&!sel.querySelector(`option[value="${cur}"]`)) sel.insertAdjacentHTML("beforeend",`<option value="${cur}">${esc(cName())}</option>`); sel.value=cur;
+  sel.onchange=()=>{ const v=sel.value; setOp(v?{t:v[0],id:v.slice(2)}:null); };
+  const ys=document.getElementById("yearSeg"); ys.innerHTML="";
+  for(const yy of CY){ const b=document.createElement("button"); b.type="button"; b.textContent=yy; b.setAttribute("aria-pressed",st.cy===yy); b.onclick=()=>{st.cy=yy;save();renderAll();}; ys.appendChild(b); }
+  document.getElementById("c_metric").innerHTML=Object.entries(CM).map(([id,m])=>`<button type="button" id="cm-${id}" aria-pressed="${st.cm===id}">${m.label}</button>`).join("");
+  for(const id of Object.keys(CM)) document.getElementById("cm-"+id).onclick=()=>{st.cm=id;save();renderAll();};
+  document.getElementById("c_h1").innerHTML=`Chirurgia<br><em>na Slovensku.</em>`;
+  document.getElementById("c_tag").textContent=cName();
+}
+
+function renderChirKpis(){
+  const k=st.sel||SR, i=TI(k), y=st.cy, b=CBASE, where=st.sel?"kraj "+st.sel:"Slovensko";
+  const d=(a,c)=>{ if(y===b||a==null||!c) return `<span class="delta flat">${y===b?"základ":"–"}</span>`; const p=(a/c-1)*100; return `<span class="delta ${p>0.5?"up":p<-0.5?"down":"flat"}" title="Zmena oproti roku ${b}">${p>0?"▲ +":p<0?"▼ ":""}${f1(p)} %</span>`; };
+  const n=cCnt(k,y), nb=cCnt(k,b);
+  const jt=SX.jzs.tot[y]?.[i], jb=SX.jzs.tot[b]?.[i], pl=SX.jzs.places[y]?.[i];
+  const av=SX.amb.d[y]?.[i], ab=SX.amb.d[b]?.[i];
+  const em=Object.values(SX.em.d[y]||{}).reduce((a,x)=>[a[0]+x[3*i],a[1]+x[3*i+1],a[2]+x[3*i+2]],[0,0,0]), emb=Object.values(SX.em.d[b]||{}).reduce((a,x)=>a+x[3*i]+x[3*i+1],0), emt=em[0]+em[1];
+  const tiles=[
+    ["Operácie",f0(n),d(n,nb),`<b>${cF(n==null?null:n/cPop(k,y)*1e5)}</b> na 100 tis. ob.`],
+    ["Jednodňové výkony",f0(jt),d(jt,jb),`<b>${f0(pl)}</b> denných miest`],
+    ["Chirurgické ambulancie",f0(av),d(av,ab),`<b>${f0(av/cPop(k,y)*1000)}</b> návštev na 1 000 ob.`],
+    ["Neodkladné operácie",f0(emt),d(emt,emb),`<b>${f0(emt?em[0]/emt*100:null)} %</b> do 5 h · úmrtnosť ${f1(emt?em[2]/emt*100:null)} %`]
+  ];
+  document.getElementById("c_kpis").innerHTML=`<div class="cap" style="grid-column:1/-1;margin:-2px 0 -4px 4px">${esc(cName())} · ${where} · ${y}${y!==b?` · zmena oproti ${b}`:""}</div>`+tiles.map(t=>`<div class="kpi"><div class="row"><span class="cap">${t[0]}</span>${t[2]}</div><div class="v">${t[1]}</div><div class="sub">${t[3]}</div></div>`).join("");
+}
+
+function renderChirMap(){
+  const m=CM[st.cm], svg=document.getElementById("c_map"), vals=KR.map(cVal), b=cBaseYear();
+  document.getElementById("c_mapTitle").innerHTML=`${m.title[0]} <em>${m.title[1]}</em><span class="mono" style="font-size:13px;color:var(--muted);margin-left:8px">${m.div?b+"→"+st.cy:st.cy}</span>`;
+  document.getElementById("c_mapNote").textContent=`${cName()} · podľa sídla nemocnice`;
+  let h="";
+  for(const k of KR) h+=`<path class="region" data-k="${k}" tabindex="0" role="button" aria-label="${k} kraj: ${m.fmt(cVal(k))}" d="${D.shapes[k].d}" style="fill:${cColor(cVal(k),vals)}"></path>`;
+  if(st.sel) h+=`<path d="${D.shapes[st.sel].d}" style="fill:none;stroke:var(--ink);stroke-width:3;pointer-events:none;stroke-linejoin:round"></path>`;
+  for(const k of KR){ const s=D.shapes[k], v=cVal(k), ink=inkOn(cColor(v,vals)), dx=k==="Bratislavský"?-4:0, dy=k==="Bratislavský"?18:0;
+    if(st.sel===k) h+=`<circle cx="${s.cx+dx}" cy="${s.cy+dy-30}" r="7" style="fill:var(--lime);stroke:var(--ink);stroke-width:1.5"/>`;
+    h+=`<text class="lbl" x="${s.cx+dx}" y="${s.cy+dy-4}" style="fill:${ink}">${AB[k]}</text><text class="lblv" x="${s.cx+dx}" y="${s.cy+dy+13}" style="fill:${ink}">${m.fmt(v)}</text>`; }
+  svg.innerHTML=h;
+  const tip=document.getElementById("c_tip"), box=svg.closest(".mapbox");
+  svg.querySelectorAll(".region").forEach(p=>{ const k=p.dataset.k; clickable(p,()=>select(k));
+    p.onmousemove=e=>tipAt(tip,box,e,`<div style="font-weight:600;margin-bottom:2px">${k} kraj</div>${m.long}: <b>${m.fmt(cVal(k))}</b><br>Slovensko: <span class="mono">${m.fmt(cSr())}</span><br>Operácie: <span class="mono">${f0(cCnt(k,st.cy))}</span>`);
+    p.onmouseleave=()=>tip.hidden=true; });
+  const lg=document.getElementById("c_legend");
+  if(m.div) lg.innerHTML=[["var(--n2)","pokles >15 %"],["var(--n1)","pokles 5–15 %"],["var(--mid)","±5 %"],["var(--p1)","rast 5–35 %"],["var(--p2)","rast >35 %"]].map(([c,t])=>`<span><i style="background:${c}"></i>${t}</span>`).join("");
+  else { const vv=vals.filter(x=>x!=null); if(!vv.length){ lg.innerHTML=`<span>Za ${st.cy} nie sú údaje.</span>`; return; } const lo=Math.min(...vv), hi=Math.max(...vv), s=(hi-lo)/5;
+    lg.innerHTML=[1,2,3,4,5].map(i=>`<span><i style="background:var(--v${i})"></i>${m.fmt(lo+s*(i-1))}–${m.fmt(lo+s*i)}</span>`).join(""); }
+}
+
+function renderChirSide(){
+  const k=st.sel||SR, isSR=k===SR, y=st.cy, i=TI(k), o=cObj(), n=cCnt(k,y), ns=cCnt(SR,y), sr=o?.sr?.[y];
+  const rows=[["sect",`${esc(cName())} · ${y}`],["Operácie",f0(n),f0(ns)],["Na 100 tis. obyvateľov",cF(n==null?null:n/cPop(k,y)*1e5),cF(ns==null?null:ns/cPop(SR,y)*1e5)]];
+  if(!isSR) rows.push(["Podiel na SR",f1(ns?n/ns*100:null)+" %",f1(cPop(k,y)/cPop(SR,y)*100)+" % ob."]);
+  if(sr) rows.push(["sect","Slovensko spolu"],["Operovaní pacienti","",f0(sr[0])],["Zomretí na 1 000 operovaných","",f1(sr[0]?sr[1]/sr[0]*1000:null)],["Podiel operácií detí 0–18","",f1(ns?sr[2]/ns*100:null)+" %"]);
+  const jt=SX.jzs.tot[y], pl=SX.jzs.places[y], av=SX.amb.d[y];
+  rows.push(["sect","Jednodňová chirurgia"],["Denné miesta",f0(pl?.[i]),f0(pl?.[0])],["Výkony",f0(jt?.[i]),f0(jt?.[0])],["Výkony na 100 tis. ob.",f0(jt?jt[i]/cPop(k,y)*1e5:null),f0(jt?jt[0]/cPop(SR,y)*1e5:null)]);
+  rows.push(["sect","Chirurgické ambulancie"],["Návštevy",f0(av?.[i]),f0(av?.[0])],["Návštevy na 1 000 ob.",f0(av?av[i]/cPop(k,y)*1000:null),f0(av?av[0]/cPop(SR,y)*1000:null)]);
+  const el=document.getElementById("c_side");
+  el.innerHTML=`<div class="who"><span class="badge">${isSR?"SK":AB[k]}</span><div><div class="cap">${isSR?"Celé Slovensko":"Vybraný kraj"}</div><h2 style="font-size:24px">${isSR?"Slovenská <em>republika</em>":esc(k)+" <em>kraj</em>"}</h2></div></div>
+   <div class="kv"><span class="h"></span><span class="h" style="text-align:right">${isSR?"":"Kraj"}</span><span class="h" style="text-align:right">SR</span>
+   ${rows.map(r=>r[0]==="sect"?`<span class="sect">${r[1]}</span>`:`<span>${r[0]}</span><span class="val">${isSR&&r[1]!==""?"":r[1]}</span><span class="sr">${r[2]}</span>`).join("")}</div>
+   ${isSR?`<p class="note" style="margin:0">Kliknite na kraj pre detail.</p>`:`<button class="linkbtn" id="c_back">Späť na celé Slovensko</button>`}`;
+  document.getElementById("c_back")?.addEventListener("click",()=>select(null));
+}
+
+function renderChirBars(){
+  const m=CM[st.cm], rows=KR.map(k=>({k,v:cVal(k)})).sort((a,b)=>(b.v??-1e9)-(a.v??-1e9)), avg=cSr();
+  document.getElementById("c_rankNote").innerHTML=`${m.long} · ${st.cy} · čiarkovane Slovensko <span class="mono">${m.fmt(avg)}</span>`;
+  const vs=rows.map(r=>r.v??0), lo=Math.min(0,...vs), hi=Math.max(...vs,avg??0,1e-9), pct=v=>(v-lo)/(hi-lo)*100;
+  const box=document.getElementById("c_bars");
+  box.innerHTML=rows.map(r=>`<div class="bar${st.sel===r.k?" sel":""}" data-k="${r.k}" role="button" tabindex="0"><span>${r.k}</span>
+    <span class="track"><span class="fill" style="left:${pct(Math.min(0,r.v??0))}%;width:${Math.max(1.5,Math.abs(pct(r.v??0)-pct(0)))}%;${(r.v??0)<0?"background:var(--orange)":""}"></span>${avg!=null?`<span class="avg" style="left:${pct(avg)}%"></span>`:""}</span>
+    <span class="v">${m.fmt(r.v)}</span></div>`).join("");
+  box.querySelectorAll(".bar").forEach(b=>clickable(b,()=>select(b.dataset.k)));
+}
+
+function renderChirTrend(){
+  const svg=document.getElementById("c_trend"), W=460,H0=260,L=48,R=18,T=18,B=30, o=cObj();
+  const per=(k,y)=>{ const n=cCnt(k,y,o); return n==null?null:n/cPop(k,y)*1e5; };
+  const cmp=st.sel||KR.slice().sort((a,b)=>(per(b,st.cy)??0)-(per(a,st.cy)??0))[0];
+  const series=[{name:"Slovensko",k:SR,color:"#85878f",dash:"4 4"},{name:cmp+" kraj",k:cmp,color:"var(--violet)",area:true}];
+  document.getElementById("c_trendNote").textContent=`${cName()} · na 100 tis. obyvateľov`;
+  const y0=+CY[0], y1=+CY.at(-1), pts=s=>CY.map(y=>({y:+y,v:per(s.k,y)})).filter(p=>p.v!=null);
+  const all=series.flatMap(s=>pts(s).map(p=>p.v)); if(!all.length){ svg.innerHTML=""; return; }
+  const hi=Math.max(...all)*1.12||1, stp=Math.pow(10,Math.floor(Math.log10(hi/4))), tick=Math.ceil(hi/4/stp)*stp, top=tick*4;
+  const x=y=>L+(y-y0)/(y1-y0)*(W-L-R), yv=v=>T+(1-v/top)*(H0-T-B);
+  let h=`<defs><linearGradient id="cga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a5bff" stop-opacity=".28"/><stop offset="1" stop-color="#7a5bff" stop-opacity="0"/></linearGradient></defs>`;
+  for(let g=0;g<=top+1e-9;g+=tick) h+=`<line x1="${L}" x2="${W-R}" y1="${yv(g)}" y2="${yv(g)}" style="stroke:var(--hair)"/><text x="${L-8}" y="${yv(g)+4}" style="fill:var(--muted);font:11px var(--mono);text-anchor:end">${tick>=1?f0(g):f1(g)}</text>`;
+  for(let y=y0;y<=y1;y+=1) if((y-y0)%2===0||y===y1) h+=`<text x="${x(y)}" y="${H0-8}" style="fill:var(--muted);font:11px var(--mono);text-anchor:middle">${y}</text>`;
+  const cov=[x(2020)-8,x(2021)+8]; h+=`<rect x="${cov[0]}" y="${T}" width="${cov[1]-cov[0]}" height="${H0-T-B}" style="fill:var(--tile)"/><text x="${(cov[0]+cov[1])/2}" y="${T+12}" style="fill:var(--muted);font:10px var(--mono);text-anchor:middle">covid</text>`;
+  const lastV=series.map(s=>pts(s).at(-1)?.v);
+  for(const [i,s] of series.entries()){ const p=pts(s); if(!p.length) continue;
+    if(s.area) h+=`<path d="M${x(p[0].y)},${yv(0)} ${p.map(q=>`L${x(q.y)},${yv(q.v)}`).join(" ")} L${x(p.at(-1).y)},${yv(0)}Z" style="fill:url(#cga)"/>`;
+    for(let j=0;j<p.length-1;j++) h+=`<line x1="${x(p[j].y)}" y1="${yv(p[j].v)}" x2="${x(p[j+1].y)}" y2="${yv(p[j+1].v)}" style="stroke:${s.color};stroke-width:2.2;stroke-linecap:round${s.dash?";stroke-dasharray:"+s.dash:""}"/>`;
+    const sel=p.find(q=>q.y===+st.cy); if(sel) h+=`<circle cx="${x(sel.y)}" cy="${yv(sel.v)}" r="${s.area?6.5:4}" style="fill:${s.area?"var(--lime)":s.color};stroke:var(--ink);stroke-width:${s.area?1.5:0}"/>`;
+    const lp=p.at(-1), below=lastV[i]<lastV[1-i]; h+=`<text x="${x(lp.y)-8}" y="${yv(lp.v)+(below?20:-11)}" style="fill:var(--ink);font:500 12px var(--mono);text-anchor:end">${cF(lp.v)}</text>`; }
+  CY.forEach(y=>h+=`<rect x="${x(+y)-16}" y="${T}" width="32" height="${H0-T-B}" style="fill:transparent" data-y="${y}" class="hit"/>`);
+  svg.innerHTML=h;
+  document.getElementById("c_trendLegend").innerHTML=series.map(s=>`<span><i style="background:${s.color};height:4px;width:16px"></i>${s.name}</span>`).join("");
+  const tip=document.getElementById("c_tip2");
+  svg.querySelectorAll(".hit").forEach(r=>{ r.onmousemove=e=>tipAt(tip,svg.parentElement,e,`<div style="font-weight:600;margin-bottom:2px">${r.dataset.y}</div>`+series.map(s=>`${s.name}: <b>${cF(per(s.k,r.dataset.y))}</b>`).join("<br>"),210); r.onmouseleave=()=>tip.hidden=true; clickable(r,()=>{st.cy=r.dataset.y;save();renderAll();}); });
+}
+
+function dgRows(el, rows, onPick, isOn){
+  const mx=Math.max(1,...rows.map(r=>r.v));
+  el.innerHTML=rows.map((r,i)=>`<div class="dgrow${isOn&&isOn(r)?" on":""}" data-i="${i}" ${onPick?'role="button" tabindex="0"':'style="cursor:default"'}><span class="nm">${esc(r.n)}</span><span class="v">${f0(r.v)}</span><span class="track"><span class="fill" style="width:${r.v/mx*100}%"></span></span>${r.meta?`<span class="meta">${r.meta}</span>`:""}</div>`).join("")||`<p class="note">Za tento výber nie sú údaje.</p>`;
+  if(onPick) el.querySelectorAll(".dgrow").forEach(d=>clickable(d,()=>onPick(rows[+d.dataset.i])));
+}
+
+function renderChirOps(){
+  const k=st.sel||SR, y=st.cy, P=cPop(k,y), kids=cKids(), lvl=kids[0]?.t;
+  const rows=kids.map(r=>({...r,v:cCnt(k,y,r.o)||0,n:r.o.n})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v);
+  const shown=rows.slice(0,14);
+  shown.forEach(r=>{ r.meta=`${cF(r.v/P*1e5)} na 100 tis.${r.o.sr?.[y]?` · SR ${f1(r.o.sr[y][0]?r.o.sr[y][1]/r.o.sr[y][0]*1000:null)} ‰ zomretých`:""}`; });
+  document.getElementById("c_opTitle").innerHTML=lvl==="g"?`Skupiny <em>operácií</em>`:`Operácie <em>v skupine</em>`;
+  document.getElementById("c_opNote").textContent=`${st.sel?"Kraj "+st.sel:"Slovensko"} · ${y}${rows.length>shown.length?` · ${shown.length} z ${rows.length}`:""} · kliknutím vyberiete`;
+  const up=document.getElementById("c_opUp"); up.hidden=!st.op; up.onclick=()=>setOp(st.op?.t==="o"?{t:"g",id:SX.ops[st.op.id].g}:null);
+  const on=r=>st.op&&st.op.t===r.t&&st.op.id===r.id;
+  dgRows(document.getElementById("c_ops"), shown, r=>setOp(on(r)&&r.t==="o"?{t:"g",id:r.o.g}:{t:r.t,id:r.id}), on);
+}
+
+function renderChirTech(){
+  const k=st.sel||SR, i=TI(k), y=st.cy, s=st.op;
+  let list=SX.tech;
+  if(s?.t==="o"){ const g=SX.ops[s.id].g, own=t=>t.items.some(it=>it[0]===s.id); list=list.filter(t=>t.g===g).sort((a,b)=>own(b)-own(a)); }
+  else if(s?.t==="g") list=list.filter(t=>t.g===s.id);
+  const tot=t=>t.items.reduce((a,it)=>a+(SX.ops[it[0]].t[y]?.[i]||0),0);
+  const pin=t=>s?.t==="o"&&t.items.some(it=>it[0]===s.id); list=list.map(t=>({...t,tot:tot(t)})).filter(t=>t.tot>0).sort((a,b)=>(pin(b)-pin(a))||(b.tot-a.tot)).slice(0,8);
+  const minInv=(t,yy)=>{ let a=0,b=0; for(const [id,tech] of t.items){ const v=SX.ops[id].t[yy]?.[i]||0; b+=v; if(tech==="laparoskopicky"||tech==="roboticky") a+=v; } return b?a/b*100:null; };
+  document.getElementById("c_techNote").textContent=`${st.sel?"Kraj "+st.sel:"Slovensko"} · ${y} · podiel techník rovnakej operácie`;
+  const el=document.getElementById("c_tech");
+  el.innerHTML=list.map(t=>{ const m0=minInv(t,"2015"), m=minInv(t,y);
+    return `<div class="techrow"><div class="techhd"><span class="nm">${esc(t.base)}</span><span class="v">${f0(t.tot)}</span></div>
+      <div class="stack" style="height:14px">${t.items.map(([id,tech])=>{ const v=SX.ops[id].t[y]?.[i]||0; return v?`<span data-op="${id}" role="button" tabindex="0" title="${tech}: ${f0(v)} (${f0(v/t.tot*100)} %)" style="width:${v/t.tot*100}%;background:${TECHC[tech]};cursor:pointer;${st.op?.id===id?"outline:2px solid var(--violet);outline-offset:1px":""}"></span>`:""; }).join("")}</div>
+      <div class="meta">${t.items.map(([id,tech])=>{ const v=SX.ops[id].t[y]?.[i]||0; return `${tech} ${f0(v/t.tot*100)} %`; }).join(" · ")}${m!=null&&m0!=null&&y!=="2015"?` · min. invazívne: 2015 ${f0(m0)} % → ${y} ${f0(m)} %`:""}</div></div>`; }).join("")||`<p class="note">Pre tento výber nie sú operácie s viacerými technikami.</p>`;
+  el.querySelectorAll("[data-op]").forEach(sp=>clickable(sp,()=>setOp({t:"o",id:sp.dataset.op})));
+}
+
+function renderChirDep(){
+  const k=st.sel||SR, i=TI(k), s=st.op, ids = !s ? Object.keys(SX.ops) : s.t==="g" ? Object.keys(SX.ops).filter(id=>SX.ops[id].g===s.id) : [s.id];
+  const agg={}; for(const id of ids) for(const [d,a] of Object.entries(SX.ops[id].dep||{})) agg[d]=(agg[d]||0)+a[i];
+  const tot=Object.values(agg).reduce((a,b)=>a+b,0);
+  const rows=Object.entries(agg).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([n,v])=>({n:n[0].toUpperCase()+n.slice(1),v,meta:`${f1(v/tot*100)} % operácií`}));
+  document.getElementById("c_depNote").textContent=`${cName()} · ${st.sel?"kraj "+st.sel:"Slovensko"} · odbornosť oddelenia · ${SX.last}`;
+  dgRows(document.getElementById("c_dep"), rows);
+}
+
+function renderChirJzs(){
+  const k=st.sel||SR, i=TI(k), y=st.cy, J=SX.jzs, P=cPop(k,y), t=J.tot[y]?.[i], t0=J.tot[CY[0]]?.[i], pl=J.places[y]?.[i];
+  document.getElementById("c_jzsNote").textContent=`${st.sel?"Kraj "+st.sel:"Slovensko"} · ${y} · ${+y>=2023?"skupiny výkonov podľa DRG":"skupiny výkonov JZS"}`;
+  document.getElementById("c_jzsSum").innerHTML=`<span>Výkony <b>${f0(t)}</b></span><span>Na 100 tis. ob. <b>${f0(t!=null?t/P*1e5:null)}</b></span><span>Denné miesta <b>${f0(pl)}</b></span>${t0&&y!==CY[0]?`<span>Od ${CY[0]} <b>${t>t0?"+":""}${f0((t/t0-1)*100)} %</b></span>`:""}`;
+  const rows=Object.entries(J.cat[y]||{}).map(([n,a])=>({n,v:a[i]})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v).slice(0,9);
+  rows.forEach(r=>r.meta=`${f1(r.v/t*100)} % výkonov · ${cF(r.v/P*1e5)} na 100 tis.`);
+  dgRows(document.getElementById("c_jzs"), rows);
+}
+
+function renderChirEm(){
+  const k=st.sel||SR, i=TI(k), y=st.cy, d=SX.em.d[y]||{};
+  const rows=Object.entries(d).map(([c,a])=>({n:SX.em.cats[c],a:a[3*i],b:a[3*i+1],u:a[3*i+2]})).filter(r=>r.a+r.b>0).sort((x,z)=>(z.a+z.b)-(x.a+x.b));
+  const S=rows.reduce((s,r)=>({a:s.a+r.a,b:s.b+r.b,u:s.u+r.u}),{a:0,b:0,u:0});
+  document.getElementById("c_emNote").textContent=`${st.sel?"Kraj "+st.sel:"Slovensko"} · ${y} · operovaní pacienti podľa času od prijatia`;
+  const nm=s=>{ const p=s.split(" - "); return p.length<2?esc(s):`<span style="color:var(--muted);font-size:11px;display:block">${esc(p[0])}</span>${esc(p.slice(1).join(" – "))}`; };
+  const pct=(x,t)=>t?f0(x/t*100)+" %":"–";
+  document.getElementById("c_em").innerHTML=`<thead><tr><th style="cursor:default">Príhoda</th><th style="cursor:default;text-align:right">Operovaní</th><th style="cursor:default;text-align:right">Do 5 h</th><th style="cursor:default;text-align:right">Zomretí</th></tr></thead><tbody>`+
+    rows.slice(0,10).map(r=>`<tr><td>${nm(r.n)}</td><td class="num" style="text-align:right">${f0(r.a+r.b)}</td><td class="num" style="text-align:right">${pct(r.a,r.a+r.b)}</td><td class="num" style="text-align:right">${pct(r.u,r.a+r.b)}</td></tr>`).join("")+
+    `<tr style="font-weight:600"><td>Spolu${rows.length>10?` (${rows.length} príhod)`:""}</td><td class="num" style="text-align:right">${f0(S.a+S.b)}</td><td class="num" style="text-align:right">${pct(S.a,S.a+S.b)}</td><td class="num" style="text-align:right">${pct(S.u,S.a+S.b)}</td></tr></tbody>`;
+}
+
+function renderChirAmb(){
+  const k=st.sel||SR, i=TI(k), y=st.cy, A=SX.amb, a=A.d[y], P=cPop(k,y);
+  document.getElementById("c_ambNote").textContent=`${st.sel?"Kraj "+st.sel:"Slovensko"} · ${y} · chirurgia, úrazová a detská chirurgia`;
+  if(!a){ document.getElementById("c_ambSum").innerHTML=""; document.getElementById("c_amb").innerHTML=`<p class="note">Za ${y} nie sú údaje.</p>`; return; }
+  document.getElementById("c_ambSum").innerHTML=`<span>Návštevy <b>${f0(a[i])}</b></span><span>Na 1 000 ob. <b>${f0(a[i]/P*1000)}</b></span>`;
+  const rows=A.labels.slice(1).map((n,j)=>({n,v:a[(j+1)*9+i]})).filter(r=>r.v>0).sort((x,z)=>z.v-x.v);
+  rows.forEach(r=>r.meta=`${f0(r.v/P*1e5)} na 100 tis. ob.`);
+  dgRows(document.getElementById("c_amb"), rows);
+}
+
+function renderChir(){ renderChirControls(); renderChirKpis(); renderChirMap(); renderChirSide(); renderChirBars(); renderChirTrend(); renderChirOps(); renderChirTech(); renderChirDep(); renderChirJzs(); renderChirEm(); renderChirAmb(); }
+
+function renderTabs(){
+  const chir=st.tab==="chir";
+  document.getElementById("view-main").hidden=chir; document.getElementById("view-chir").hidden=!chir;
+  document.getElementById("specWrap").hidden=chir; document.getElementById("dxWrap").hidden=chir; document.getElementById("opWrap").hidden=!chir;
+  document.querySelectorAll("#tabs button").forEach(b=>{ b.setAttribute("aria-pressed",b.dataset.tab===st.tab); b.onclick=()=>{ if(st.tab===b.dataset.tab) return; st.tab=b.dataset.tab; try{ history.replaceState(null,"",st.tab==="chir"?"#chirurgia":location.pathname); }catch(e){} save(); renderAll(); window.scrollTo(0,0); }; });
+  document.title = chir ? "Chirurgia · Zdravotná sieť Slovenska" : "Zdravotná sieť Slovenska";
+}
+
 function select(k){ st.sel = st.sel===k ? null : k; renderAll(); }
-function renderAll(){ renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
+function renderAll(){ renderTabs(); if(st.tab==="chir"){ renderChir(); return; } renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
+try{ if(location.hash==="#chirurgia") st.tab="chir"; }catch(e){}
 renderAll();
 </script>
