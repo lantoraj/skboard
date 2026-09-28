@@ -136,6 +136,11 @@ ul.notes{margin:0;padding-left:18px;color:var(--ink2);font-size:13px;display:fle
 .dgrow .fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--violet)}
 .dgrow .meta{grid-column:1/-1;font:11px var(--mono);color:var(--muted);margin-top:-4px}
 .flowbox{overflow-x:auto}
+.tfilter{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.tfilter input,.tfilter select{font:14px var(--sans);color:var(--ink);background:var(--tile);border:1px solid var(--hair);border-radius:999px;padding:9px 16px;min-width:0}
+.tfilter input{flex:1 1 280px}
+.tfilter select{flex:0 1 220px;appearance:none;cursor:pointer;padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,var(--ink2) 50%),linear-gradient(135deg,var(--ink2) 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;background-size:5px 5px;background-repeat:no-repeat}
+.tfilter input:focus-visible,.tfilter select:focus-visible{outline:2px solid var(--violet);outline-offset:1px;background-color:var(--card)}
 .dxsel{background:var(--card);border:1px solid var(--hair);width:100%;text-overflow:ellipsis}
 .selwrap{min-width:0}.selwrap.dx{flex:0 1 310px;max-width:100%}
 .top{border-radius:26px}
@@ -227,6 +232,10 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
         <label class="chk"><input type="checkbox" id="onlyProg" checked> Iba s programom tejto odbornosti</label>
         <button class="linkbtn" id="clearSel" hidden>Celé Slovensko</button>
       </div>
+    </div>
+    <div class="tfilter">
+      <label for="hq" style="position:absolute;left:-9999px">Hľadať nemocnicu</label><input type="search" id="hq" placeholder="Hľadať nemocnicu, mesto alebo kód (napr. Košice, N42231)" autocomplete="off">
+      <label for="hk" style="position:absolute;left:-9999px">Kraj</label><select id="hk"></select>
     </div>
     <div class="tablebox"><table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
     <p class="note" style="margin:12px 0 0">Úroveň programu I.–V. podľa kategorizácie 2026, čierne = úroveň IV. a V. Hviezdička pri úrovni nemocnice: úroveň špecializovanej nemocnice odvodená od produkcie alebo hlavnej nemocnice.</p>
@@ -500,16 +509,21 @@ function renderTable(){
   const th=document.getElementById("thead");
   th.innerHTML=cols.map(c=>`<th data-k="${c[0]}"${c[2]?` title="${esc(c[2])}"`:""} aria-sort="${c[0]===st.sort.k?(st.sort.dir<0?"descending":"ascending"):"none"}">${esc(c[1])}</th>`).join("");
   th.querySelectorAll("th").forEach(t=>t.onclick=()=>{const kk=t.dataset.k; st.sort={k:kk,dir:st.sort.k===kk?-st.sort.dir:(["k","n","t"].includes(kk)?1:-1)}; renderTable();});
-  let rows=D.hosp.filter(h=>(!k||h.k===k)&&(!only||hasProg(h)));
+  const hk=document.getElementById("hk"); if(!hk.options.length){ hk.innerHTML=`<option value="">Všetky kraje</option>`+KR.map(x=>`<option value="${x}">${x} kraj</option>`).join(""); hk.onchange=()=>{ st.sel=hk.value||null; renderAll(); }; }
+  hk.value=k||"";
+  const q=norm(document.getElementById("hq").value.trim());
+  let rows=D.hosp.filter(h=>(!k||h.k===k)&&(!only||hasProg(h))&&(!q||norm(`${h.n} ${h.c} ${h.k} ${h.t}`).includes(q)));
   rows.forEach(h=>h.lv=RN.indexOf(h.l.replace(/\*/g,"").trim()));
   const pk=/^p\d+$/.test(st.sort.k)?st.sort.k.slice(1):null, gv=h=>pk?(h.p[pk]||0):h[st.sort.k];
   rows.sort((a,b)=>{const A=gv(a),B=gv(b); return (A>B?1:A<B?-1:0)*st.sort.dir || a.n.localeCompare(b.n,"sk");});
   const cell=v=>v?`<span class="chip${v>=4?" hi":""}">${RN[v]}</span>`:`<span class="dash">—</span>`;
-  document.getElementById("tbody").innerHTML=rows.map(h=>`<tr><td>${esc(h.k)}</td><td>${esc(h.n)}</td><td class="lv">${esc(h.l)}</td><td>${esc(h.t)}</td>${g.progs.map(p=>`<td class="c">${cell(h.p[p[0]])}</td>`).join("")}</tr>`).join("")||`<tr><td colspan="${cols.length}" class="note">Žiadna nemocnica nevyhovuje filtru.</td></tr>`;
+  document.getElementById("tbody").innerHTML=rows.map(h=>`<tr><td>${esc(h.k)}</td><td>${esc(h.n)}</td><td class="lv">${esc(h.l)}</td><td>${esc(h.t)}</td>${g.progs.map(p=>`<td class="c">${cell(h.p[p[0]])}</td>`).join("")}</tr>`).join("")||`<tr><td colspan="${cols.length}" class="note">Žiadna nemocnica nevyhovuje filtru.${only?" Skúste vypnúť „Iba s programom tejto odbornosti“.":""}</td></tr>`;
   document.getElementById("tblTitle").innerHTML=`Nemocnice <em>${k?esc(k)+" kraj":"na Slovensku"}</em> <span class="mono" style="font-size:14px;color:var(--muted)">${rows.length}</span>`;
   document.getElementById("clearSel").hidden=!k;
 }
+const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 document.getElementById("onlyProg").onchange=renderTable;
+document.getElementById("hq").oninput=renderTable;
 document.getElementById("clearSel").onclick=()=>select(null);
 function select(k){ st.sel = st.sel===k ? null : k; renderAll(); }
 function renderAll(){ renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
