@@ -140,6 +140,7 @@ ul.notes{margin:0;padding-left:18px;color:var(--ink2);font-size:13px;display:fle
 .view{display:flex;flex-direction:column;gap:18px}
 .tabs{margin-right:auto}
 .tabs button{font-weight:600}
+.tabs .tabsep{width:1px;align-self:stretch;margin:6px 6px;background:var(--hair2,#c9cad0);flex:none}
 .techrow{display:flex;flex-direction:column;gap:6px;padding:8px 0;border-bottom:1px solid var(--hair)}
 .techrow:last-child{border-bottom:0}
 .techhd{display:flex;justify-content:space-between;gap:12px;font-size:13px}
@@ -187,7 +188,7 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
 <div class="wrap">
   <nav class="top" aria-label="Nastavenia">
     <div class="brand"><span class="badge">SK</span>Zdravotná sieť</div>
-    <div class="pills tabs" role="group" aria-label="Pohľad" id="tabs"><button type="button" data-tab="main">Prehľad</button><button type="button" data-tab="chir">Chirurgia</button><button type="button" data-tab="klby">Kĺbové náhrady</button><button type="button" data-tab="kardio">Kardiológia</button><button type="button" data-tab="onko">Onkológia</button><button type="button" data-tab="eko">Ekonomika</button></div>
+    <div class="pills tabs" role="group" aria-label="Pohľad" id="tabs"><button type="button" data-tab="main">Prehľad</button><button type="button" data-tab="chir">Chirurgia</button><button type="button" data-tab="klby">Kĺbové náhrady</button><button type="button" data-tab="kardio">Kardiológia</button><button type="button" data-tab="onko">Onkológia</button><span class="tabsep" aria-hidden="true"></span><button type="button" data-tab="eko">Ekonomika</button></div>
     <div class="topr">
       <div class="selwrap" id="specWrap"><label for="spec" style="position:absolute;left:-9999px">Odbornosť</label><select id="spec" class="specsel"></select></div>
       <div class="selwrap dx" id="dxWrap"><label for="dx" style="position:absolute;left:-9999px">Diagnóza</label><select id="dx" class="specsel dxsel"></select></div>
