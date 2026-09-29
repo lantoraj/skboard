@@ -146,6 +146,15 @@ ul.notes{margin:0;padding-left:18px;color:var(--ink2);font-size:13px;display:fle
 .techhd .v{font:500 13px var(--mono)}
 .techrow .meta{font:11px var(--mono);color:var(--muted)}
 table.emt{min-width:0}
+.deps{display:flex;flex-direction:column;gap:4px}
+.deprow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:end;padding:6px 0;border-bottom:1px solid var(--hair)}
+.deprow:last-child{border-bottom:0}
+.deprow .nm{font-size:13px;line-height:1.35}
+.deprow .nm small{color:var(--muted);font-size:11px;margin-left:6px}
+.deprow .nm .chip{font-size:10px;min-width:0;padding:0 6px;margin-left:4px}
+.deprow .v{font:500 13px var(--mono);text-align:right;white-space:nowrap}
+.deprow .v small{color:var(--orange)}
+.deprow .meta{grid-column:1/-1;font:11px var(--mono);color:var(--muted)}
 table.emt td,table.emt th{padding:8px 6px}
 .tfilter{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
 .tfilter input,.tfilter select{font:14px var(--sans);color:var(--ink);background:var(--tile);border:1px solid var(--hair);border-radius:999px;padding:9px 16px;min-width:0}
@@ -176,11 +185,12 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
 <div class="wrap">
   <nav class="top" aria-label="Nastavenia">
     <div class="brand"><span class="badge">SK</span>Zdravotná sieť</div>
-    <div class="pills tabs" role="group" aria-label="Pohľad" id="tabs"><button type="button" data-tab="main">Prehľad</button><button type="button" data-tab="chir">Chirurgia</button></div>
+    <div class="pills tabs" role="group" aria-label="Pohľad" id="tabs"><button type="button" data-tab="main">Prehľad</button><button type="button" data-tab="chir">Chirurgia</button><button type="button" data-tab="klby">Kĺbové náhrady</button></div>
     <div class="topr">
       <div class="selwrap" id="specWrap"><label for="spec" style="position:absolute;left:-9999px">Odbornosť</label><select id="spec" class="specsel"></select></div>
       <div class="selwrap dx" id="dxWrap"><label for="dx" style="position:absolute;left:-9999px">Diagnóza</label><select id="dx" class="specsel dxsel"></select></div>
       <div class="selwrap dx" id="opWrap" hidden><label for="opSel" style="position:absolute;left:-9999px">Operácia</label><select id="opSel" class="specsel dxsel"></select></div>
+      <div class="pills" role="group" aria-label="Kĺb" id="jointSeg" hidden></div>
       <div class="pills" role="group" aria-label="Rok" id="yearSeg"></div>
     </div>
   </nav>
@@ -352,6 +362,83 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
     </ul>
   </section>
 </div>
+
+<div id="view-klby" class="view" hidden>
+  <header class="hero">
+    <div>
+      <div class="cap"><span class="dot"></span>Slovenský artroplastický register · výročná správa <span id="k_year"></span></div>
+      <h1>Kĺbové náhrady<br><em>na Slovensku.</em></h1>
+      <p class="tag" id="k_tag"></p>
+    </div>
+    <p class="lead">Primárne a revízne totálne endoprotézy bedrového a kolenného kĺbu podľa pracovísk a krajov, vývoj od roku 2003, spôsob fixácie, kostné cementy, pacienti a dôvody revízií. Kliknite na kraj v mape.</p>
+  </header>
+
+  <section class="kpis" id="k_kpis" aria-label="Súhrn kĺbových náhrad"></section>
+
+  <div class="main">
+    <section class="card mapbox" aria-label="Mapa kĺbových náhrad">
+      <div class="cardhead"><div><h2 id="k_mapTitle"></h2><p class="note" id="k_mapNote" style="margin:4px 0 0"></p></div></div>
+      <div class="pills" role="group" aria-label="Ukazovateľ" id="k_metric" style="margin-bottom:12px"></div>
+      <div class="maptile"><svg id="k_map" viewBox="-12 -6 748 380" role="img" aria-labelledby="k_mapTitle"></svg></div>
+      <div class="legend" id="k_legend"></div>
+      <div class="tip" id="k_tip" hidden></div>
+    </section>
+    <aside class="card side" id="k_side" aria-live="polite"></aside>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Pracoviská</h2><p class="note" id="k_depNote" style="margin:4px 0 0"></p></div>
+        <div class="legend" style="margin:4px 0 0"><span><i style="background:var(--violet)"></i>primárne</span><span><i style="background:var(--orange)"></i>revízie</span></div></div>
+      <div class="deps" id="k_deps"></div>
+      <button class="linkbtn" id="k_depMore" style="margin-top:10px" hidden></button>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Vývoj <em>výkonov</em></h2><p class="note" id="k_trendNote" style="margin:4px 0 0"></p></div>
+        <div class="legend" style="margin:4px 0 0"><span><i style="background:var(--violet)"></i>primárne</span><span><i style="background:var(--orange)"></i>revízie</span></div></div>
+      <div style="position:relative"><svg id="k_trend" viewBox="0 0 460 260" style="width:100%;height:auto;display:block"></svg><div class="tip" id="k_tip2" hidden></div></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Spôsob <em>fixácie</em></h2><p class="note" id="k_fixNote" style="margin:4px 0 0"></p></div><div class="legend" id="k_fixLegend" style="margin:4px 0 0"></div></div>
+      <div style="position:relative"><svg id="k_fix" viewBox="0 0 460 240" style="width:100%;height:auto;display:block"></svg><div class="tip" id="k_tip3" hidden></div></div>
+      <div class="tablebox" style="margin-top:12px"><table class="emt" id="k_rr"></table></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Kostné <em>cementy</em></h2><p class="note" id="k_cemNote" style="margin:4px 0 0"></p></div></div>
+      <div class="dg" id="k_cem"></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Pacienti</h2><p class="note" id="k_patNote" style="margin:4px 0 0"></p></div></div>
+      <div class="agesum" id="k_patSum" style="margin:0 0 14px"></div>
+      <div class="cap" style="margin-bottom:8px">Vek pri operácii</div>
+      <div class="dg" id="k_age"></div>
+      <div class="cap" style="margin:18px 0 8px">Diagnóza</div>
+      <div class="dg" id="k_diag"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Dôvody <em>revízií</em></h2><p class="note" id="k_reasNote" style="margin:4px 0 0"></p></div></div>
+      <div class="dg" id="k_reas"></div>
+    </section>
+  </div>
+
+  <section style="padding-inline:4px">
+    <h2 style="margin-bottom:10px">Metodika <em>kĺbových náhrad</em></h2>
+    <ul class="notes">
+      <li>Zdroj: Slovenský artroplastický register (SAR, správca UN Martin), výročná správa 2023. Bedrový kĺb od roku 2003, kolenný od roku 2006. Údaje sú prevzaté z tabuliek správy (PDF) a súčty pracovísk sú overené proti celkovým počtom registra.</li>
+      <li>Pracoviská a kraje: počty podľa pracoviska za rok 2023; kraj = sídlo pracoviska. Prepočet na obyvateľov kraja je preto len orientačný, pacienti môžu cestovať do iných krajov.</li>
+      <li>Úroveň ortopedického programu pri pracovisku pochádza zo Zoznamu kategorizovaných nemocníc 2026 (MZ SR).</li>
+      <li>Revidovanosť (RR) = podiel implantátov, ktoré boli revidované, za celé obdobie registra; stredná doba prežívania v rokoch.</li>
+      <li>Výrobcov implantátov register vo výročnej správe uvádza len ako počty modelov komponentov v databáze, nie ako počty implantácií; trhové podiely výrobcov preto nie sú dostupné. Kostné cementy sú uvedené podľa počtu použití.</li>
+      <li>Výročnú správu za rok 2024 doplníme, keď bude k dispozícii.</li>
+    </ul>
+  </section>
+</div>
 </div>
 
 <script>
@@ -365,7 +452,7 @@ const TYP = [["nem","Nemocnica","var(--ink)"],["pol","Poliklinika","var(--violet
 const nf = new Intl.NumberFormat("sk-SK");
 const f0 = v => v==null||isNaN(v) ? "–" : nf.format(Math.round(v)), f1 = v => v==null||isNaN(v) ? "–" : v.toLocaleString("sk-SK",{minimumFractionDigits:1,maximumFractionDigits:1});
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}, tab:"main", cy:D.sx.last, op:null, cm:"p"};
+let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}, tab:"main", cy:D.sx.last, op:null, cm:"p", joint:"hip", km:"p", depAll:false};
 const grp = () => D.groups.find(g=>g.id===st.g);
 const ch = () => grp().ch;
 const chName = () => ch()==="ALL" ? "Všetky diagnózy" : D.chn[ch()].replace(/^[IVX]+\.\s*/,"") + (RANGE[ch()]?` (${RANGE[ch()]})`:"");
@@ -407,8 +494,8 @@ const M = {
 };
 const ZMAP={hosp:"zp",alos:"zl",mort:"zm",age:"zp",hchg:"zchg"};
 const resOk = () => !st.d || (st.d.t==="ch" && ch()==="ALL");
-try{ const s=JSON.parse(localStorage.getItem("sietSK2")||"{}"); if(D.groups.some(g=>g.id===s.g)) st.g=s.g; if(M[s.m]) st.m=s.m; if(HY.includes(s.y)) st.y=s.y; if(s.d&&D.dx[s.d.t]?.[s.d.id]) st.d=s.d; if(s.tab==="chir") st.tab="chir"; if(D.sx.years.includes(s.cy)) st.cy=s.cy; if(s.op&&(s.op.t==="g"?D.sx.groups:D.sx.ops)[s.op.id]) st.op=s.op; if(["p","n","chg"].includes(s.cm)) st.cm=s.cm; if(!resOk()&&ZMAP[st.m]) st.m=ZMAP[st.m]; }catch(e){}
-const save=()=>{try{localStorage.setItem("sietSK2",JSON.stringify({g:st.g,m:st.m,y:st.y,d:st.d,tab:st.tab,cy:st.cy,op:st.op,cm:st.cm}))}catch(e){}};
+try{ const s=JSON.parse(localStorage.getItem("sietSK2")||"{}"); if(D.groups.some(g=>g.id===s.g)) st.g=s.g; if(M[s.m]) st.m=s.m; if(HY.includes(s.y)) st.y=s.y; if(s.d&&D.dx[s.d.t]?.[s.d.id]) st.d=s.d; if(["chir","klby"].includes(s.tab)) st.tab=s.tab; if(["hip","knee"].includes(s.joint)) st.joint=s.joint; if(["p","n","r"].includes(s.km)) st.km=s.km; if(D.sx.years.includes(s.cy)) st.cy=s.cy; if(s.op&&(s.op.t==="g"?D.sx.groups:D.sx.ops)[s.op.id]) st.op=s.op; if(["p","n","chg"].includes(s.cm)) st.cm=s.cm; if(!resOk()&&ZMAP[st.m]) st.m=ZMAP[st.m]; }catch(e){}
+const save=()=>{try{localStorage.setItem("sietSK2",JSON.stringify({g:st.g,m:st.m,y:st.y,d:st.d,tab:st.tab,cy:st.cy,op:st.op,cm:st.cm,joint:st.joint,km:st.km}))}catch(e){}};
 const my = () => M[st.m].years ? nearest(M[st.m].years, st.y) : st.y;
 const val = k => M[st.m].get(k, my());
 const srVal = () => M[st.m].srAvg ? M[st.m].srAvg() : M[st.m].get(SR, my());
@@ -842,16 +929,170 @@ function renderChirAmb(){
 
 function renderChir(){ renderChirControls(); renderChirKpis(); renderChirMap(); renderChirSide(); renderChirBars(); renderChirTrend(); renderChirOps(); renderChirTech(); renderChirDep(); renderChirJzs(); renderChirEm(); renderChirAmb(); }
 
+const VIEWS={main:{el:"view-main",hash:"",title:"Zdravotná sieť Slovenska"},chir:{el:"view-chir",hash:"#chirurgia",title:"Chirurgia · Zdravotná sieť Slovenska"},klby:{el:"view-klby",hash:"#klby",title:"Kĺbové náhrady · Zdravotná sieť Slovenska"}};
 function renderTabs(){
-  const chir=st.tab==="chir";
-  document.getElementById("view-main").hidden=chir; document.getElementById("view-chir").hidden=!chir;
-  document.getElementById("specWrap").hidden=chir; document.getElementById("dxWrap").hidden=chir; document.getElementById("opWrap").hidden=!chir;
-  document.querySelectorAll("#tabs button").forEach(b=>{ b.setAttribute("aria-pressed",b.dataset.tab===st.tab); b.onclick=()=>{ if(st.tab===b.dataset.tab) return; st.tab=b.dataset.tab; try{ history.replaceState(null,"",st.tab==="chir"?"#chirurgia":location.pathname); }catch(e){} save(); renderAll(); window.scrollTo(0,0); }; });
-  document.title = chir ? "Chirurgia · Zdravotná sieť Slovenska" : "Zdravotná sieť Slovenska";
+  for(const [id,v] of Object.entries(VIEWS)) document.getElementById(v.el).hidden = st.tab!==id;
+  document.getElementById("specWrap").hidden=st.tab!=="main"; document.getElementById("dxWrap").hidden=st.tab!=="main";
+  document.getElementById("opWrap").hidden=st.tab!=="chir"; document.getElementById("jointSeg").hidden=st.tab!=="klby"; document.getElementById("yearSeg").hidden=st.tab==="klby";
+  document.querySelectorAll("#tabs button").forEach(b=>{ b.setAttribute("aria-pressed",b.dataset.tab===st.tab); b.onclick=()=>{ if(st.tab===b.dataset.tab) return; st.tab=b.dataset.tab; try{ history.replaceState(null,"",VIEWS[st.tab].hash||location.pathname); }catch(e){} save(); renderAll(); window.scrollTo(0,0); }; });
+  document.title = VIEWS[st.tab].title;
 }
 
+/* ---------- Kĺbové náhrady (SAR) ---------- */
+const AR = D.ar, KY = AR.year;
+const KL = {
+  fix:{"Cemented":"cementovaná","Uncemented":"necementovaná","Hybrids":"hybridná","Reverse hybr.":"reverzne hybridná","Reverse hybrids":"reverzne hybridná"},
+  age:{"[0,55]":"do 55 rokov","(55,65]":"56–65 rokov","(65,75]":"66–75 rokov","(75,max]":"nad 75 rokov","Not ident.":"neuvedený"},
+  diag:{"Primary OA":"Primárna artróza","Dysplastic OA":"Dysplastická artróza","Posttraumatic OA":"Poúrazová artróza","AVN":"Avaskulárna nekróza","M.Perthes":"M. Perthes","RA":"Reumatoidná artritída","Fracture":"Zlomenina","Other causes":"Iné príčiny","Not ident.":"Neuvedené","Primary monocond.OA":"Primárna artróza – jeden kondyl","Primary bicond.OA":"Primárna artróza – oba kondyly","Unspecified":"Neuvedené"},
+  reas:{"Paraarticular Osifications":"Paraartikulárne osifikácie","Luxation":"Luxácia","Polyethylene Wear":"Opotrebenie polyetylénu","Early Infection":"Včasná infekcia","Chronic Infection":"Chronická infekcia","Acetabulary Protrusis":"Protrúzia acetabula","Aseptic Loos. of Both Comp.":"Aseptické uvoľnenie oboch komponentov","Aseptic Loos. of Acet. Comp.":"Aseptické uvoľnenie jamky","Aseptic Loos. of Fem. Comp.":"Aseptické uvoľnenie drieku","Osteolysis of Acetabulum":"Osteolýza acetabula","Osteolysis of Femur":"Osteolýza femuru","Big Bone Defect of Acetabulum":"Veľký kostný defekt acetabula","Big Bone Defect of Femur":"Veľký kostný defekt femuru","Periprosthesis Fracture":"Periprotetická zlomenina","Fracture of Implant":"Zlomenina implantátu","Spacer to THA":"Spacer na TEP","Girdlestone to THA":"Girdlestone na TEP","Other":"Iné","Aseptic Loosening of Femoral Comp.":"Aseptické uvoľnenie femorálneho komponentu","Aseptic Loosening of Tibial Comp.":"Aseptické uvoľnenie tibiálneho komponentu","Aseptic Loosening of Patellar Comp.":"Aseptické uvoľnenie patelárneho komponentu","Patellar nectrosis":"Nekróza pately","Patellar Luxation":"Luxácia pately","Patellar Pain":"Bolesť pately","Colateral Ligaments Instability":"Instabilita kolaterálnych väzov","Instability of PCL":"Instabilita zadného skríženého väzu","Stifness":"Stuhnutosť","Malposition":"Malpozícia","Knee Pain Without Loosening":"Bolesť kolena bez uvoľnenia","Spacer to TKA":"Spacer na TEP","Other causes":"Iné príčiny"}
+};
+const FIXC = {"Cemented":"var(--ink)","Uncemented":"var(--violet)","Hybrids":"var(--lime)","Reverse hybr.":"#c3c5cc"};
+const J = () => AR.j[st.joint];
+const jName = () => st.joint==="hip" ? "bedrový kĺb" : "kolenný kĺb";
+const jFirst = () => Object.keys(J().pr.d)[0];
+const kPop = k => popOf(k, nearest(HY, KY));
+const KDEP = () => J().dep.map(([code,p,r])=>({code,p,r,n:AR.depts[code][0],pzs:AR.depts[code][1],k:AR.depts[code][2]}));
+const kAgg = () => { const a={}; for(const k of KR) a[k]={p:0,r:0,n:0}; for(const d of KDEP()){ a[d.k].p+=d.p; a[d.k].r+=d.r; if(d.p) a[d.k].n++; } return a; };
+const KM = {
+  p:{label:"Na 100 tis. ob.", long:"Primárne náhrady na 100 tis. obyvateľov", title:["Primárne náhrady","na 100 000 obyvateľov"], fmt:f0, get:(k,A)=>A[k].p/kPop(k)*1e5},
+  n:{label:"Počet", long:"Primárne náhrady", title:["Primárne náhrady","počet"], fmt:f0, get:(k,A)=>A[k].p},
+  r:{label:"Podiel revízií", long:"Revízie z výkonov", title:["Podiel revízií","z výkonov"], fmt:v=>f1(v)+" %", get:(k,A)=>(A[k].p+A[k].r)?A[k].r/(A[k].p+A[k].r)*100:null}
+};
+const orthoIdx = () => D.groups.find(g=>g.id==="orto").progs[0][0];
+const RNk=["","I.","II.","III.","IV.","V."];
+
+function renderKlbyControls(){
+  const js=document.getElementById("jointSeg");
+  js.innerHTML=[["hip","Bedrový kĺb"],["knee","Kolenný kĺb"]].map(([id,l])=>`<button type="button" data-j="${id}" aria-pressed="${st.joint===id}">${l}</button>`).join("");
+  js.querySelectorAll("button").forEach(b=>b.onclick=()=>{ st.joint=b.dataset.j; st.depAll=false; save(); renderAll(); });
+  document.getElementById("k_metric").innerHTML=Object.entries(KM).map(([id,m])=>`<button type="button" id="km-${id}" aria-pressed="${st.km===id}">${m.label}</button>`).join("");
+  for(const id of Object.keys(KM)) document.getElementById("km-"+id).onclick=()=>{st.km=id;save();renderAll();};
+  document.getElementById("k_year").textContent=KY;
+  document.getElementById("k_tag").textContent=`${st.joint==="hip"?"Bedrový":"Kolenný"} kĺb · ${jFirst()}–${KY}`;
+}
+
+function renderKlbyKpis(){
+  const pr=J().pr.d, y=KY, b="2019", A=kAgg(), k=st.sel;
+  const P=k?A[k].p:pr[y][0], R=k?A[k].r:pr[y][1], pop=k?kPop(k):kPop(SR);
+  const dl=(a,c)=>{ if(!c) return `<span class="delta flat">–</span>`; const p=(a/c-1)*100; return `<span class="delta ${p>0.5?"up":p<-0.5?"down":"flat"}" title="Zmena oproti ${b}">${p>0?"▲ +":p<0?"▼ ":""}${f1(p)} %</span>`; };
+  const deps=KDEP().filter(d=>(!k||d.k===k)&&d.p>0).sort((a,c)=>c.p-a.p), top5=deps.slice(0,5).reduce((s,d)=>s+d.p,0);
+  const inc0=pr[b][0]/kPop(SR)*1e5;
+  const tiles=[
+    ["Primárne náhrady",f0(P),k?"":dl(pr[y][0],pr[b][0]),k?`${f1(P/pr[y][0]*100)} % Slovenska`:`${f0(pr[b][0])} v roku ${b}`],
+    ["Revízie",f0(R),k?"":dl(pr[y][1],pr[b][1]),`${f1(R/(P+R)*100)} % z výkonov`],
+    ["Na 100 tis. obyvateľov",f0(P/pop*1e5),"",k?`Slovensko ${f0(pr[y][0]/kPop(SR)*1e5)}`:`v roku ${b}: ${f0(inc0)}`],
+    ["Pracoviská",f0(deps.length),"",`top 5 robí ${f0(deps.length?top5/P*100:null)} % výkonov`]
+  ];
+  document.getElementById("k_kpis").innerHTML=`<div class="cap" style="grid-column:1/-1;margin:-2px 0 -4px 4px">${jName()} · ${k?"pracoviská v kraji "+k:"Slovensko"} · ${y}${k?"":" · zmena oproti "+b}</div>`+tiles.map(t=>`<div class="kpi"><div class="row"><span class="cap">${t[0]}</span>${t[2]}</div><div class="v">${t[1]}</div><div class="sub">${t[3]}</div></div>`).join("");
+}
+
+function renderKlbyMap(){
+  const m=KM[st.km], A=kAgg(), svg=document.getElementById("k_map"), vals=KR.map(k=>m.get(k,A));
+  const col=v=>{ if(v==null) return "var(--mid)"; const lo=Math.min(...vals), hi=Math.max(...vals), t=hi===lo?0:(v-lo)/(hi-lo); return "var(--v"+Math.min(5,1+Math.floor(t*5))+")"; };
+  document.getElementById("k_mapTitle").innerHTML=`${m.title[0]} <em>${m.title[1]}</em><span class="mono" style="font-size:13px;color:var(--muted);margin-left:8px">${KY}</span>`;
+  document.getElementById("k_mapNote").textContent=`${jName()} · podľa sídla pracoviska`;
+  let h="";
+  for(const k of KR) h+=`<path class="region" data-k="${k}" tabindex="0" role="button" aria-label="${k} kraj: ${m.fmt(m.get(k,A))}" d="${D.shapes[k].d}" style="fill:${col(m.get(k,A))}"></path>`;
+  if(st.sel) h+=`<path d="${D.shapes[st.sel].d}" style="fill:none;stroke:var(--ink);stroke-width:3;pointer-events:none;stroke-linejoin:round"></path>`;
+  for(const k of KR){ const s=D.shapes[k], v=m.get(k,A), ink=inkOn(col(v)), dx=k==="Bratislavský"?-4:0, dy=k==="Bratislavský"?18:0;
+    if(st.sel===k) h+=`<circle cx="${s.cx+dx}" cy="${s.cy+dy-30}" r="7" style="fill:var(--lime);stroke:var(--ink);stroke-width:1.5"/>`;
+    h+=`<text class="lbl" x="${s.cx+dx}" y="${s.cy+dy-4}" style="fill:${ink}">${AB[k]}</text><text class="lblv" x="${s.cx+dx}" y="${s.cy+dy+13}" style="fill:${ink}">${m.fmt(v)}</text>`; }
+  svg.innerHTML=h;
+  const tip=document.getElementById("k_tip"), box=svg.closest(".mapbox");
+  svg.querySelectorAll(".region").forEach(p=>{ const k=p.dataset.k; clickable(p,()=>select(k));
+    p.onmousemove=e=>tipAt(tip,box,e,`<div style="font-weight:600;margin-bottom:2px">${k} kraj</div>${m.long}: <b>${m.fmt(m.get(k,A))}</b><br>Primárne: <span class="mono">${f0(A[k].p)}</span> · revízie: <span class="mono">${f0(A[k].r)}</span><br>Pracoviská: <span class="mono">${A[k].n}</span>`);
+    p.onmouseleave=()=>tip.hidden=true; });
+  const lo=Math.min(...vals), hi=Math.max(...vals), s=(hi-lo)/5;
+  document.getElementById("k_legend").innerHTML=[1,2,3,4,5].map(i=>`<span><i style="background:var(--v${i})"></i>${m.fmt(lo+s*(i-1))}–${m.fmt(lo+s*i)}</span>`).join("");
+}
+
+function renderKlbySide(){
+  const k=st.sel, isSR=!k, A=kAgg(), pr=J().pr.d[KY], P=isSR?pr[0]:A[k].p, R=isSR?pr[1]:A[k].r, pop=isSR?kPop(SR):kPop(k);
+  const rows=[["sect",`${jName()} · ${KY}`],["Primárne náhrady",f0(P),f0(pr[0])],["Revízie",f0(R),f0(pr[1])],["Na 100 tis. obyvateľov",f0(P/pop*1e5),f0(pr[0]/kPop(SR)*1e5)],["Podiel revízií",f1(R/(P+R)*100)+" %",f1(pr[1]/(pr[0]+pr[1])*100)+" %"]];
+  if(!isSR) rows.push(["Podiel na SR",f1(P/pr[0]*100)+" %",f1(kPop(k)/kPop(SR)*100)+" % ob."]);
+  const deps=KDEP().filter(d=>(isSR||d.k===k)&&d.p+d.r>0).sort((a,b)=>b.p-a.p);
+  const el=document.getElementById("k_side");
+  el.innerHTML=`<div class="who"><span class="badge">${isSR?"SK":AB[k]}</span><div><div class="cap">${isSR?"Celé Slovensko":"Vybraný kraj"}</div><h2 style="font-size:24px">${isSR?"Slovenská <em>republika</em>":esc(k)+" <em>kraj</em>"}</h2></div></div>
+   <div class="kv"><span class="h"></span><span class="h" style="text-align:right">${isSR?"":"Kraj"}</span><span class="h" style="text-align:right">SR</span>
+   ${rows.map(r=>r[0]==="sect"?`<span class="sect">${r[1]}</span>`:`<span>${r[0]}</span><span class="val">${isSR?"":r[1]}</span><span class="sr">${r[2]}</span>`).join("")}
+   <span class="sect">${isSR?"Najväčšie pracoviská":"Pracoviská v kraji"}</span>
+   ${deps.slice(0,isSR?6:12).map(d=>`<span>${esc(d.n)}</span><span class="val">${f0(d.p)}</span><span class="sr">${f0(d.r)} rev.</span>`).join("")}</div>
+   ${isSR?`<p class="note" style="margin:0">Kliknite na kraj pre jeho pracoviská.</p>`:`<button class="linkbtn" id="k_back">Späť na celé Slovensko</button>`}`;
+  document.getElementById("k_back")?.addEventListener("click",()=>select(null));
+}
+
+function renderKlbyDeps(){
+  const k=st.sel, oi=orthoIdx(), all=KDEP().filter(d=>(!k||d.k===k)&&d.p+d.r>0).sort((a,b)=>(b.p+b.r)-(a.p+a.r));
+  const shown=st.depAll?all:all.slice(0,10), mx=Math.max(1,...all.map(d=>d.p+d.r)), tot=all.reduce((s,d)=>s+d.p,0);
+  document.getElementById("k_depNote").textContent=`${jName()} · ${k?"kraj "+k:"Slovensko"} · ${KY} · ${all.length} pracovísk`;
+  const lvl=d=>{ const h=d.pzs&&D.hosp.find(x=>x.c===d.pzs), v=h?.p?.[oi]; return v?`<span class="chip${v>=4?" hi":""}" title="Ortopedický program ${RNk[v]} (kategorizácia 2026)">${RNk[v]}</span>`:""; };
+  document.getElementById("k_deps").innerHTML=shown.map((d,i)=>`<div class="deprow"><span class="nm"><span class="mono" style="color:var(--muted);font-size:11px;margin-right:6px">${i+1}</span>${esc(d.n)} ${lvl(d)}<small>${k?"":esc(d.k)}</small></span><span class="v">${f0(d.p)}<small> + ${f0(d.r)}</small></span>
+    <span class="stack" style="height:10px;grid-column:1/-1;background:var(--tile)"><span style="width:${d.p/mx*100}%;background:var(--violet)"></span><span style="width:${d.r/mx*100}%;background:var(--orange)"></span></span>
+    <span class="meta">${f1(d.p/tot*100)} % primárnych${d.p+d.r?` · revízie ${f1(d.r/(d.p+d.r)*100)} %`:""}</span></div>`).join("");
+  const more=document.getElementById("k_depMore"); more.hidden=all.length<=10; more.textContent=st.depAll?"Zobraziť len 10 najväčších":`Zobraziť všetkých ${all.length}`;
+  more.onclick=()=>{ st.depAll=!st.depAll; renderKlbyDeps(); };
+}
+
+function stackCols(svgId, tipId, years, series, opts={}){
+  const svg=document.getElementById(svgId), W=460, H0=+svg.getAttribute("viewBox").split(" ")[3], L=48,R=12,T=14,B=28;
+  const tot=years.map(y=>series.reduce((s,c)=>s+c.v(y),0)), pct=opts.pct, top0=pct?100:Math.max(...tot)*1.08;
+  const stp=pct?25:Math.pow(10,Math.floor(Math.log10(top0/4))), tick=pct?25:Math.ceil(top0/4/stp)*stp, top=pct?100:tick*4;
+  const bw=(W-L-R)/years.length, x=i=>L+i*bw, yv=v=>T+(1-v/top)*(H0-T-B);
+  let h="";
+  for(let g=0;g<=top+1e-9;g+=tick) h+=`<line x1="${L}" x2="${W-R}" y1="${yv(g)}" y2="${yv(g)}" style="stroke:var(--hair)"/><text x="${L-8}" y="${yv(g)+4}" style="fill:var(--muted);font:11px var(--mono);text-anchor:end">${f0(g)}${pct?" %":""}</text>`;
+  const ci=years.indexOf("2020"); if(ci>=0&&!pct) h+=`<rect x="${x(ci)}" y="${T}" width="${bw*2}" height="${H0-T-B}" style="fill:var(--tile)"/><text x="${x(ci)+bw}" y="${T+10}" style="fill:var(--muted);font:10px var(--mono);text-anchor:middle">covid</text>`;
+  years.forEach((y,i)=>{ let acc=0; for(const s of series){ const v=pct?(tot[i]?s.v(y)/tot[i]*100:0):s.v(y); if(v>0){ h+=`<rect x="${x(i)+bw*.14}" y="${yv(acc+v)}" width="${bw*.72}" height="${Math.max(0,yv(acc)-yv(acc+v)-(acc?1:0))}" rx="2" style="fill:${s.c}"/>`; } acc+=v; }
+    if(i%(years.length>18?3:2)===0||i===years.length-1) h+=`<text x="${x(i)+bw/2}" y="${H0-8}" style="fill:var(--muted);font:10px var(--mono);text-anchor:middle">${y}</text>`;
+    h+=`<rect x="${x(i)}" y="${T}" width="${bw}" height="${H0-T-B}" style="fill:transparent" data-i="${i}" class="hit"/>`; });
+  svg.innerHTML=h;
+  const tip=document.getElementById(tipId);
+  svg.querySelectorAll(".hit").forEach(r=>{ const i=+r.dataset.i, y=years[i]; r.onmousemove=e=>tipAt(tip,svg.parentElement,e,`<div style="font-weight:600;margin-bottom:2px">${y}</div>`+series.slice().reverse().map(s=>`${s.n}: <b>${f0(s.v(y))}</b>${pct&&tot[i]?` (${f0(s.v(y)/tot[i]*100)} %)`:""}`).join("<br>"),220); r.onmouseleave=()=>tip.hidden=true; });
+}
+
+function renderKlbyTrend(){
+  const pr=J().pr.d, ys=Object.keys(pr);
+  document.getElementById("k_trendNote").textContent=`${jName()} · Slovensko · ${ys[0]}–${ys.at(-1)} · počet výkonov`;
+  stackCols("k_trend","k_tip2",ys,[{n:"Primárne",c:"var(--violet)",v:y=>pr[y][0]},{n:"Revízie",c:"var(--orange)",v:y=>pr[y][1]}]);
+}
+
+function renderKlbyFix(){
+  const F=J().fix, ys=Object.keys(F.d), last=F.d[KY], tot=last.reduce((a,b)=>a+b,0);
+  document.getElementById("k_fixNote").textContent=`${jName()} · podiel primárnych náhrad · ${KY}: `+F.labels.map((l,i)=>`${KL.fix[l]||l} ${f0(last[i]/tot*100)} %`).join(", ");
+  const ser=F.labels.map((l,i)=>({n:KL.fix[l]||l,c:FIXC[l]||"var(--hair)",v:y=>F.d[y][i]}));
+  document.getElementById("k_fixLegend").innerHTML=ser.map(s=>`<span><i style="background:${s.c}"></i>${s.n}</span>`).join("");
+  stackCols("k_fix","k_tip3",ys,ser,{pct:true});
+  document.getElementById("k_rr").innerHTML=`<thead><tr><th style="cursor:default">Fixácia</th><th style="cursor:default;text-align:right">Implantáty</th><th style="cursor:default;text-align:right">Revidovanosť</th><th style="cursor:default;text-align:right">Stredné prežívanie</th></tr></thead><tbody>`+
+    J().rr.map(r=>`<tr><td>${KL.fix[r[0]]||r[0]}</td><td class="num" style="text-align:right">${f0(r[1])}</td><td class="num" style="text-align:right">${f1(r[3])} %</td><td class="num" style="text-align:right">${f1(r[4])} r.</td></tr>`).join("")+`</tbody>`;
+}
+
+function renderKlbyCem(){
+  const j=J(), b="2019", tot=y=>[j.cemA,j.cemN].reduce((s,t)=>s+(t.d[y]||[]).reduce((a,c)=>a+c,0),0), T=tot(KY), Tb=tot(b);
+  const rows=[]; for(const [t,atb] of [[j.cemA,true],[j.cemN,false]]) t.labels.forEach((l,i)=>{ const v=t.d[KY]?.[i]||0, vb=t.d[b]?.[i]||0; if(v) rows.push({n:l,v,meta:`${f1(v/T*100)} % použití · ${atb?"s antibiotikom":"bez antibiotika"}${Tb?` · ${b}: ${f1(vb/Tb*100)} %`:""}`}); });
+  rows.sort((a,c)=>c.v-a.v);
+  const atbShare=(j.cemA.d[KY]||[]).reduce((a,c)=>a+c,0)/T*100;
+  document.getElementById("k_cemNote").textContent=`${jName()} · Slovensko · ${KY} · ${f0(T)} použití, ${f0(atbShare)} % s antibiotikom`;
+  dgRows(document.getElementById("k_cem"), rows.slice(0,10));
+}
+
+function renderKlbyPat(){
+  const j=J(), s=j.sex.d[KY], tot=s[0]+s[1], ag=j.age.d[KY], at=ag.reduce((a,c)=>a+c,0), dg=j.diag.d[KY], dt=dg.reduce((a,c)=>a+c,0);
+  const ag0=j.age.d["2013"]||j.age.d[jFirst()], at0=ag0.reduce((a,c)=>a+c,0);
+  document.getElementById("k_patNote").textContent=`${jName()} · primárne náhrady · Slovensko · ${KY}`;
+  document.getElementById("k_patSum").innerHTML=`<span>Ženy <b>${f1(s[0]/tot*100)} %</b></span><span>Nad 65 rokov <b>${f1((ag[2]+ag[3])/at*100)} %</b> <span class="mono" style="font-size:12px;color:var(--muted)">(2013: ${f1((ag0[2]+ag0[3])/at0*100)} %)</span></span>`;
+  dgRows(document.getElementById("k_age"), j.age.labels.map((l,i)=>({n:KL.age[l]||l,v:ag[i],meta:`${f1(ag[i]/at*100)} %`})).filter(r=>r.v>0));
+  dgRows(document.getElementById("k_diag"), j.diag.labels.map((l,i)=>({n:KL.diag[l]||l,v:dg[i],meta:`${f1(dg[i]/dt*100)} %`})).filter(r=>r.v>0).sort((a,c)=>c.v-a.v));
+}
+
+function renderKlbyReas(){
+  const R=J().reas, d=R.d[KY], t=d.reduce((a,c)=>a+c,0), ys=Object.keys(R.d).slice(-5), sum5=R.labels.map((_,i)=>ys.reduce((s,y)=>s+(R.d[y]?.[i]||0),0)), t5=sum5.reduce((a,c)=>a+c,0);
+  document.getElementById("k_reasNote").textContent=`${jName()} · revízne operácie · Slovensko · ${KY} (${f0(t)} dôvodov; v zátvorke podiel ${ys[0]}–${ys.at(-1)})`;
+  dgRows(document.getElementById("k_reas"), R.labels.map((l,i)=>({n:KL.reas[l]||l,v:d[i],meta:`${f1(d[i]/t*100)} % (${f1(sum5[i]/t5*100)} %)`})).filter(r=>r.v>0).sort((a,c)=>c.v-a.v).slice(0,12));
+}
+
+function renderKlby(){ renderKlbyControls(); renderKlbyKpis(); renderKlbyMap(); renderKlbySide(); renderKlbyDeps(); renderKlbyTrend(); renderKlbyFix(); renderKlbyCem(); renderKlbyPat(); renderKlbyReas(); }
+
 function select(k){ st.sel = st.sel===k ? null : k; renderAll(); }
-function renderAll(){ renderTabs(); if(st.tab==="chir"){ renderChir(); return; } renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
-try{ if(location.hash==="#chirurgia") st.tab="chir"; }catch(e){}
+function renderAll(){ renderTabs(); if(st.tab==="chir"){ renderChir(); return; } if(st.tab==="klby"){ renderKlby(); return; } renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
+try{ if(location.hash==="#chirurgia") st.tab="chir"; if(location.hash==="#klby") st.tab="klby"; }catch(e){}
 renderAll();
 </script>

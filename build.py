@@ -339,14 +339,116 @@ def surgery():
             "amb": {"labels": [b[2] for b in bases], "d": amd}}
 
 
+# SAR department code -> (Slovak name, hospital code from the 2026 categorization or None, region)
+SAR_DEPTS = {
+    "BA.BORY": ("Nemocnica Bory", "P25534", "Bratislavský"), "BA.DOK": ("Národný ústav detských chorôb", "P43059", "Bratislavský"),
+    "BA.I.OTK": ("UN Bratislava, I. ortopedicko-traumatologická klinika", "P40707", "Bratislavský"),
+    "BA.II.OTK": ("UN Bratislava, II. ortopedicko-traumatologická klinika", "P40707", "Bratislavský"),
+    "BA.MED": ("Nemocnica Medissimo", None, "Bratislavský"), "BA.NPTM": ("Nemocnica Novapharm", "P84713", "Bratislavský"),
+    "BA.NSM": ("UN – Nemocnica svätého Michala", "P36845", "Bratislavský"), "BA.S.E": ("Sport & Endo Clinic", None, "Bratislavský"),
+    "BA.TRAUM": ("UN Bratislava, traumatológia", "P40707", "Bratislavský"), "MA.TRAUM": ("Nemocnica Malacky", "P29189", "Bratislavský"),
+    "DS.ORTH": ("Nemocnica Dunajská Streda", "P51102", "Trnavský"), "GA.TRAUM.ORTH": ("Nemocnica sv. Lukáša Galanta", "P80747", "Trnavský"),
+    "PN.ORTH": ("Nemocnica A. Wintera Piešťany", "P93083", "Trnavský"), "SI.ORTH": ("FN AGEL Skalica", "P81264", "Trnavský"),
+    "TT.TRAUM.ORTH": ("FN Trnava", "P20979", "Trnavský"),
+    "PB.ORTH": ("Nemocnica Považská Bystrica", "P50945", "Trenčiansky"), "PD.ORTH.TRAUM": ("Nemocnica Prievidza (Bojnice)", "P51373", "Trenčiansky"),
+    "PE.TRAUM": ("Mestská nemocnica Partizánske", None, "Trenčiansky"), "TN.ORTH": ("FN Trenčín, ortopédia", "P42383", "Trenčiansky"),
+    "TN.TRAUM": ("FN Trenčín, traumatológia", "P42383", "Trenčiansky"),
+    "LV.ORTH.": ("Nemocnica AGEL Levice, ortopédia", "P01675", "Nitriansky"), "LV.TRAUM": ("Nemocnica AGEL Levice, traumatológia", "P01675", "Nitriansky"),
+    "NR.TRAUM.ORTH": ("FN Nitra", "P85687", "Nitriansky"), "NZ.ORTH": ("FN Nové Zámky, ortopédia", "P81095", "Nitriansky"),
+    "NZ.TRAUM": ("FN Nové Zámky, traumatológia", "P81095", "Nitriansky"), "TO.ORTH": ("Nemocnica Topoľčany, ortopédia", "P59688", "Nitriansky"),
+    "TO.TRAUM": ("Nemocnica Topoľčany, traumatológia", "P59688", "Nitriansky"),
+    "BB.ORTH": ("FNsP F. D. Roosevelta Banská Bystrica, ortopédia", "N42231", "Banskobystrický"),
+    "BB.TRAUM": ("FNsP F. D. Roosevelta Banská Bystrica, traumatológia", "N42231", "Banskobystrický"),
+    "LC.ORTH.TRAUM": ("Nemocnica Lučenec", "N50139", "Banskobystrický"), "ZV.ORTH.TRAUM": ("Nemocnica AGEL Zvolen", "P79469", "Banskobystrický"),
+    "DK.ORTH.TRAUM": ("Dolnooravská nemocnica Dolný Kubín", "P51283", "Žilinský"), "LM.TRAUM.ORTH": ("Liptovská nemocnica Liptovský Mikuláš", "P66051", "Žilinský"),
+    "MT.ORTH": ("UN Martin", "P38811", "Žilinský"), "RK.TRAUM.ORTH": ("ÚVN SNP Ružomberok", "P91151", "Žilinský"),
+    "TS.TRAUM": ("Hornooravská nemocnica Trstená", "P46405", "Žilinský"), "ZA.ORTH": ("FNsP Žilina, ortopédia", "N92725", "Žilinský"),
+    "ZA.TRAUM": ("FNsP Žilina, traumatológia", "N92725", "Žilinský"),
+    "HE.ORTH": ("Nemocnica A. Leňa Humenné", "P27233", "Prešovský"), "PO.ORTH": ("FNsP J. A. Reimana Prešov, ortopédia", "N33067", "Prešovský"),
+    "PO.TRAUM": ("FNsP J. A. Reimana Prešov, traumatológia", "N33067", "Prešovský"), "PP.ORTH": ("Nemocnica Poprad, ortopédia", "N22001", "Prešovský"),
+    "PP.TRAUM": ("Nemocnica Poprad, traumatológia", "N22001", "Prešovský"), "SL.TRAUM": ("Ľubovnianska nemocnica", "N56229", "Prešovský"),
+    "VT.TRAUM": ("Vranovská nemocnica", "P02824", "Prešovský"),
+    "KE.ORTH": ("Železničné zdravotníctvo Košice", "P45507", "Košický"), "KE.ORTH.TRAUM": ("UN L. Pasteura Košice, ortopédia", "P77017", "Košický"),
+    "KE.TRAUM": ("UN L. Pasteura Košice, traumatológia", "P77017", "Košický"), "KS.ORTH": ("Nemocnica AGEL Košice-Šaca", "P43979", "Košický"),
+    "MI.ORTH": ("Nemocnica Š. Kukuru Michalovce, ortopédia", "P66599", "Košický"), "MI.TRAUM": ("Nemocnica Š. Kukuru Michalovce, traumatológia", "P66599", "Košický"),
+    "RV.TRAUM": ("Nemocnica sv. Barbory Rožňava", "P85363", "Košický"),
+}
+
+
+def sar():
+    """Slovak Arthroplasty Register annual report (PDF): hip and knee arthroplasty."""
+    import pymupdf
+    pdf = sorted((DATA / "sar").glob("SAR_vyrocna_sprava_*.pdf"))[-1]
+    doc = pymupdf.open(pdf)
+    texts = [p.get_text() for p in doc]
+    page_of = lambda n: next(i for i, t in enumerate(texts) if re.search(rf"Tab\. ?{n} ", t))
+    clean = lambda s: " ".join(str(s or "").replace("Hy brids", "Hybrids").replace("Rev erse hy br", "Reverse hybr").split())
+    axis = lambda s: bool(re.fullmatch(r"[\d\s%.,]+", s))
+
+    def table(n, must):
+        for tb in doc[page_of(n)].find_tables().tables:
+            rows = tb.extract()
+            for i, row in enumerate(rows[:3]):
+                head = [clean(c) for c in row]
+                if must in head:
+                    return head, rows[i + 1:]
+        raise ValueError(f"SAR table {n}: header {must!r} not found")
+
+    def by_year(n, must):
+        head, rows = table(n, must)
+        yi = next(i for i, h in enumerate(head) if h in ("Year", "Years"))
+        cols = [(i, h) for i, h in enumerate(head) if h and i != yi and not axis(h)]
+        d = {}
+        for r in rows:
+            y = clean(r[yi])
+            if re.fullmatch(r"\d{4}", y):
+                d[y] = [int(float(clean(r[i]) or 0)) for i, _ in cols]
+        return {"labels": [h for _, h in cols], "d": d}
+
+    def rr(n):
+        head, rows = table(n, "Fixation")
+        return [[clean(r[1]), int(clean(r[2])), int(clean(r[3])), float(clean(r[4])), float(clean(r[7]))] for r in rows if clean(r[1]) and clean(r[2]).isdigit()]
+
+    def depts(n):
+        out, p = [], page_of(n)
+        for page in (p, p + 1):  # long tables continue on the next page
+            for tb in doc[page].find_tables().tables:
+                rows = tb.extract()
+                if clean(rows[0][0]) != "Department":
+                    continue
+                for r in rows[1:]:
+                    c = clean(r[0])
+                    if c == "Total":
+                        return out
+                    if c and clean(r[2]).isdigit():
+                        out.append([c, int(clean(r[2])), int(clean(r[3]))])
+        raise ValueError(f"SAR table {n}: no Total row")
+
+    year = re.search(r"(\d{4})", pdf.name).group(1)
+    joints = {
+        "hip": dict(pr=by_year(18, "Primary THA"), pop=by_year(10, "Inhabitants"), sex=by_year(11, "Females"), age=by_year(26, "[0,55]"),
+                    diag=by_year(36, "Primary OA"), fix=by_year(46, "Cemented"), rr=rr(47), cemA=by_year(50, "Copal"),
+                    cemN=by_year(51, "Osteobond"), reas=by_year(64, "Luxation"), dep=depts(53)),
+        "knee": dict(pr=by_year(85, "Primary TKA"), sex=by_year(14, "Females"), age=by_year(93, "[0,55]"),
+                     diag=by_year(103, "Primary monocond.OA"), fix=by_year(113, "Cemented"), rr=rr(114), cemA=by_year(117, "Copal"),
+                     cemN=by_year(118, "Osteobond"), reas=by_year(130, "Early Infection"), dep=depts(119)),
+    }
+    for j in joints.values():
+        unknown = [d[0] for d in j["dep"] if d[0] not in SAR_DEPTS]
+        if unknown:
+            raise ValueError(f"SAR departments without mapping: {unknown}")
+    return {"year": year, "j": joints, "depts": {k: list(v) for k, v in SAR_DEPTS.items()}}
+
+
 def main():
     stats, years = network()
     hosp, groups = hospitals()
     hs, pop, flows, chn, dg = hospitalizations()
     dx = diagnoses()
     sx = surgery()
+    ar = sar()
     data = {"groups": groups, "stats": stats, "hosp": hosp, "shapes": shapes(), "years": years,
-            "hs": hs, "popY": pop, "flows": flows, "chn": chn, "dg": dg, "dx": dx, "sx": sx, "hyears": sorted(pop)}
+            "hs": hs, "popY": pop, "flows": flows, "chn": chn, "dg": dg, "dx": dx, "sx": sx, "ar": ar, "hyears": sorted(pop)}
     page = (ROOT / "template.html").read_text(encoding="utf-8").replace("__DATA__", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     # template.html is an artifact body; a standalone host needs the document shell (charset!) around it
     head_end = page.index("</style>") + len("</style>")
