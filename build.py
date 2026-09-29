@@ -440,6 +440,70 @@ def sar():
     return {"year": year, "j": joints, "depts": {k: list(v) for k, v in SAR_DEPTS.items()}}
 
 
+CARDIO_DG = [("all", "Všetky diagnózy"), ("I10_15", "Hypertenzné choroby (I10–I15)"), ("I20_25", "Ischemické choroby srdca (I20–I25)"),
+             ("I42_43", "Kardiomyopatie (I42–I43)"), ("I44_45_I47_49", "Poruchy srdcového rytmu (I44–I45, I47–I49)"),
+             ("I50", "Chronické srdcové zlyhávanie (I50)")]
+
+
+def cardiology():
+    """NCZI A17 (cardiology outpatient clinics, 2013+) and circulatory-system hospitalizations (SR, 2014+)."""
+    src = DATA / "nczi_kardiologia"
+    xl = src / "A17_2013_2025_dataset.xlsx"
+    terr = [SR] + [k + " kraj" for k in KR]
+    ages = ["00-24", "25-44", "45-64", "65-74", "75-84", "85_v"]
+
+    def prep(sheet):
+        d = pd.read_excel(xl, sheet_name=sheet)
+        d["t"] = d.UZEMIE_POPIS.map(lambda s: terr.index(str(s).strip()) if str(s).strip() in terr else -1)
+        d["y"] = d.ROK_SPRAC.astype(str)
+        return d[d.t >= 0]
+
+    v = prep("SUM_3101")
+    vis = {}
+    for r in v.itertuples(index=False):
+        vis.setdefault(r.y, [0] * 9)[r.t] = int(pd.to_numeric(pd.Series([r.NAV_P_0018, r.NAV_P_19]), errors="coerce").fillna(0).sum())
+
+    def series(sheet, cols):
+        d = prep(sheet)
+        acol = next(c for c in d.columns if c.startswith("CIS_VS13"))
+        scol = next(c for c in d.columns if c.startswith("CIS_POHL"))
+        d["a"] = d[acol].astype(str).map(lambda s: ages.index(s) if s in ages else -1)
+        d["s"] = pd.to_numeric(d[scol], errors="coerce").fillna(0).astype(int) - 1
+        d = d[(d.a >= 0) & d.s.isin([0, 1])]
+        tot, age = {}, {}
+        for key, col in cols.items():
+            d[col] = pd.to_numeric(d[col], errors="coerce").fillna(0)
+            for (y, t), s in d.groupby(["y", "t"]):
+                tot.setdefault(y, {}).setdefault(key, [0] * 9)[t] = int(s[col].sum())
+                a = age.setdefault(y, {}).setdefault(key, [0] * (9 * 12))
+                for r in s.itertuples(index=False):
+                    a[t * 12 + r.s * 6 + r.a] += int(getattr(r, col))
+        return tot, age
+
+    fol, fol_age = series("SUM_3201", {"all": "P_SLE_K_31_12"})
+    new, new_age = series("SUM_3201", {"all": "PN_SLE"})
+    f2, f2_age = series("SUM_3210", {k: "P_SLE_" + k for k, _ in CARDIO_DG[1:]})
+    n2, n2_age = series("SUM_3211", {k: "PN_SLE_" + k for k, _ in CARDIO_DG[1:]})
+    for a, b in [(fol, f2), (fol_age, f2_age), (new, n2), (new_age, n2_age)]:
+        for y, x in b.items():
+            a.setdefault(y, {}).update(x)
+
+    h = pd.read_excel(src / "Hospitalizacie_na_choroby_obehovej_sustavy_v_SR_2014_2025.xlsx", sheet_name="T3_1", header=None)
+    hosp, y = {}, None
+    for r in h.itertuples(index=False):
+        c0, name = str(r[0]).strip(), str(r[1]).strip()
+        if re.fullmatch(r"\d{4}(\.0)?", c0):
+            y = c0[:4]
+        if not y or name in ("nan", "") or not re.search(r"\d", str(r[2])):
+            continue
+        vals = r[2:10]
+        nums = [int(float(x)) if str(x).strip() not in ("–", "-", "nan", "") else 0 for x in vals]
+        hosp.setdefault(" ".join(name.split()), {})[y] = nums
+    hy = sorted({y for v in hosp.values() for y in v})
+    return {"years": sorted(vis), "dg": CARDIO_DG, "ages": ages, "vis": vis, "fol": fol, "new": new, "folAge": fol_age, "newAge": new_age,
+            "hosp": hosp, "hyears": hy, "hages": ["0–24", "25–44", "45–64", "65–74", "75–84", "85+", "neznáma"]}
+
+
 def main():
     stats, years = network()
     hosp, groups = hospitals()
@@ -447,8 +511,9 @@ def main():
     dx = diagnoses()
     sx = surgery()
     ar = sar()
+    kd = cardiology()
     data = {"groups": groups, "stats": stats, "hosp": hosp, "shapes": shapes(), "years": years,
-            "hs": hs, "popY": pop, "flows": flows, "chn": chn, "dg": dg, "dx": dx, "sx": sx, "ar": ar, "hyears": sorted(pop)}
+            "hs": hs, "popY": pop, "flows": flows, "chn": chn, "dg": dg, "dx": dx, "sx": sx, "ar": ar, "kd": kd, "hyears": sorted(pop)}
     page = (ROOT / "template.html").read_text(encoding="utf-8").replace("__DATA__", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     # template.html is an artifact body; a standalone host needs the document shell (charset!) around it
     head_end = page.index("</style>") + len("</style>")

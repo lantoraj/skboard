@@ -146,6 +146,8 @@ ul.notes{margin:0;padding-left:18px;color:var(--ink2);font-size:13px;display:fle
 .techhd .v{font:500 13px var(--mono)}
 .techrow .meta{font:11px var(--mono);color:var(--muted)}
 table.emt{min-width:0}
+.two>section,.main>section,.main>aside{min-width:0}
+#kd_prog{min-width:640px}#kd_prog td:first-child{min-width:190px}
 .deps{display:flex;flex-direction:column;gap:4px}
 .deprow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:end;padding:6px 0;border-bottom:1px solid var(--hair)}
 .deprow:last-child{border-bottom:0}
@@ -185,11 +187,12 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
 <div class="wrap">
   <nav class="top" aria-label="Nastavenia">
     <div class="brand"><span class="badge">SK</span>Zdravotná sieť</div>
-    <div class="pills tabs" role="group" aria-label="Pohľad" id="tabs"><button type="button" data-tab="main">Prehľad</button><button type="button" data-tab="chir">Chirurgia</button><button type="button" data-tab="klby">Kĺbové náhrady</button></div>
+    <div class="pills tabs" role="group" aria-label="Pohľad" id="tabs"><button type="button" data-tab="main">Prehľad</button><button type="button" data-tab="chir">Chirurgia</button><button type="button" data-tab="klby">Kĺbové náhrady</button><button type="button" data-tab="kardio">Kardiológia</button></div>
     <div class="topr">
       <div class="selwrap" id="specWrap"><label for="spec" style="position:absolute;left:-9999px">Odbornosť</label><select id="spec" class="specsel"></select></div>
       <div class="selwrap dx" id="dxWrap"><label for="dx" style="position:absolute;left:-9999px">Diagnóza</label><select id="dx" class="specsel dxsel"></select></div>
       <div class="selwrap dx" id="opWrap" hidden><label for="opSel" style="position:absolute;left:-9999px">Operácia</label><select id="opSel" class="specsel dxsel"></select></div>
+      <div class="selwrap dx" id="kdWrap" hidden><label for="kdSel" style="position:absolute;left:-9999px">Diagnóza</label><select id="kdSel" class="specsel dxsel"></select></div>
       <div class="pills" role="group" aria-label="Kĺb" id="jointSeg" hidden></div>
       <div class="pills" role="group" aria-label="Rok" id="yearSeg"></div>
     </div>
@@ -439,6 +442,77 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
     </ul>
   </section>
 </div>
+
+<div id="view-kardio" class="view" hidden>
+  <header class="hero">
+    <div>
+      <div class="cap"><span class="dot"></span>NCZI · kardiologické ambulancie a hospitalizácie</div>
+      <h1>Kardiológia<br><em>na Slovensku.</em></h1>
+      <p class="tag" id="kd_tag"></p>
+    </div>
+    <p class="lead">Pacienti sledovaní v kardiologických ambulanciách podľa diagnóz, veku a krajov 2013–2025, návštevy, hospitalizácie na choroby obehovej sústavy 2014–2025 a nemocnice s kardiologickými programami. Vyberte diagnózu hore, potom kliknite na kraj.</p>
+  </header>
+
+  <section class="kpis" id="kd_kpis" aria-label="Súhrn kardiológie"></section>
+
+  <div class="main">
+    <section class="card mapbox" aria-label="Mapa kardiológie">
+      <div class="cardhead"><div><h2 id="kd_mapTitle"></h2><p class="note" id="kd_mapNote" style="margin:4px 0 0"></p></div></div>
+      <div class="pills" role="group" aria-label="Ukazovateľ" id="kd_metric" style="margin-bottom:12px"></div>
+      <div class="maptile"><svg id="kd_map" viewBox="-12 -6 748 380" role="img" aria-labelledby="kd_mapTitle"></svg></div>
+      <div class="legend" id="kd_legend"></div>
+      <div class="tip" id="kd_tip" hidden></div>
+    </section>
+    <aside class="card side" id="kd_side" aria-live="polite"></aside>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Rebríček <em>krajov</em></h2><p class="note" id="kd_rankNote" style="margin:4px 0 0"></p></div></div>
+      <div class="bars" id="kd_bars"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Vývoj <em>v čase</em></h2><p class="note" id="kd_trendNote" style="margin:4px 0 0"></p></div><div class="legend" id="kd_trendLegend" style="margin:4px 0 0"></div></div>
+      <div style="position:relative"><svg id="kd_trend" viewBox="0 0 460 260" style="width:100%;height:auto;display:block"></svg><div class="tip" id="kd_tip2" hidden></div></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Diagnózy <em>v ambulanciách</em></h2><p class="note" id="kd_dgNote" style="margin:4px 0 0"></p></div></div>
+      <div class="dg" id="kd_dg"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Vek a pohlavie <em>pacientov</em></h2><p class="note" id="kd_ageNote" style="margin:4px 0 0"></p></div><div class="legend" style="margin:4px 0 0"><span><i style="background:var(--ink)"></i>muži</span><span><i style="background:var(--violet)"></i>ženy</span></div></div>
+      <svg id="kd_pyr" class="pyr" viewBox="0 0 460 170" style="width:100%;height:auto;display:block" role="img" aria-label="Veková pyramída sledovaných pacientov"></svg>
+      <div class="agesum" id="kd_ageSum"></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Hospitalizácie <em>na choroby obehovej sústavy</em></h2><p class="note" id="kd_hNote" style="margin:4px 0 0"></p></div></div>
+      <div style="position:relative;margin-bottom:10px"><svg id="kd_htrend" viewBox="0 0 460 200" style="width:100%;height:auto;display:block"></svg><div class="tip" id="kd_tip3" hidden></div></div>
+      <div class="dg" id="kd_h"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Kardiologické <em>programy nemocníc</em></h2><p class="note" id="kd_progNote" style="margin:4px 0 0"></p></div></div>
+      <div class="tablebox"><table class="emt" id="kd_prog"></table></div>
+    </section>
+  </div>
+
+  <section style="padding-inline:4px">
+    <h2 style="margin-bottom:10px">Metodika <em>kardiológie</em></h2>
+    <ul class="notes">
+      <li>Ambulancie: NCZI, štatistické zisťovanie A17 (kardiologické ambulancie), 2013–2025. Sledované osoby k 31. 12., osoby prijaté do sledovania počas roka a návštevy; kraj = sídlo ambulancie. Návštevy nie sú členené podľa diagnóz.</li>
+      <li>Návratnosť výkazov je približne 84 % (2025), skutočné počty sú preto vyššie. Pri porovnaní krajov a rokov berte do úvahy rozdielnu návratnosť.</li>
+      <li>Hospitalizácie: NCZI, Hospitalizácie na choroby obehovej sústavy v SR 2014–2025 (tabuľka T3.1), iba za celé Slovensko. Hospitalizácie podľa krajov nájdete na liste Prehľad pri odbornosti Kardiológia.</li>
+      <li>Prepočet na obyvateľov používa priemerný stav obyvateľstva NCZI; pre roky 2013–2019 stav z roku 2020.</li>
+      <li>Programy nemocníc: MZ SR, Zoznam kategorizovaných nemocníc 2026, najvyššia úroveň programu.</li>
+      <li>Ročenky „Činnosť kardiologických ambulancií“ 2018–2025 obsahujú rovnaké údaje ako dataset A17, preto nie sú spracované samostatne.</li>
+    </ul>
+  </section>
+</div>
 </div>
 
 <script>
@@ -452,7 +526,7 @@ const TYP = [["nem","Nemocnica","var(--ink)"],["pol","Poliklinika","var(--violet
 const nf = new Intl.NumberFormat("sk-SK");
 const f0 = v => v==null||isNaN(v) ? "–" : nf.format(Math.round(v)), f1 = v => v==null||isNaN(v) ? "–" : v.toLocaleString("sk-SK",{minimumFractionDigits:1,maximumFractionDigits:1});
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}, tab:"main", cy:D.sx.last, op:null, cm:"p", joint:"hip", km:"p", depAll:false};
+let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}, tab:"main", cy:D.sx.last, op:null, cm:"p", joint:"hip", km:"p", depAll:false, kdg:"all", ky:D.kd.years.at(-1), kdm:"f", kh:"Spolu"};
 const grp = () => D.groups.find(g=>g.id===st.g);
 const ch = () => grp().ch;
 const chName = () => ch()==="ALL" ? "Všetky diagnózy" : D.chn[ch()].replace(/^[IVX]+\.\s*/,"") + (RANGE[ch()]?` (${RANGE[ch()]})`:"");
@@ -494,8 +568,8 @@ const M = {
 };
 const ZMAP={hosp:"zp",alos:"zl",mort:"zm",age:"zp",hchg:"zchg"};
 const resOk = () => !st.d || (st.d.t==="ch" && ch()==="ALL");
-try{ const s=JSON.parse(localStorage.getItem("sietSK2")||"{}"); if(D.groups.some(g=>g.id===s.g)) st.g=s.g; if(M[s.m]) st.m=s.m; if(HY.includes(s.y)) st.y=s.y; if(s.d&&D.dx[s.d.t]?.[s.d.id]) st.d=s.d; if(["chir","klby"].includes(s.tab)) st.tab=s.tab; if(["hip","knee"].includes(s.joint)) st.joint=s.joint; if(["p","n","r"].includes(s.km)) st.km=s.km; if(D.sx.years.includes(s.cy)) st.cy=s.cy; if(s.op&&(s.op.t==="g"?D.sx.groups:D.sx.ops)[s.op.id]) st.op=s.op; if(["p","n","chg"].includes(s.cm)) st.cm=s.cm; if(!resOk()&&ZMAP[st.m]) st.m=ZMAP[st.m]; }catch(e){}
-const save=()=>{try{localStorage.setItem("sietSK2",JSON.stringify({g:st.g,m:st.m,y:st.y,d:st.d,tab:st.tab,cy:st.cy,op:st.op,cm:st.cm,joint:st.joint,km:st.km}))}catch(e){}};
+try{ const s=JSON.parse(localStorage.getItem("sietSK2")||"{}"); if(D.groups.some(g=>g.id===s.g)) st.g=s.g; if(M[s.m]) st.m=s.m; if(HY.includes(s.y)) st.y=s.y; if(s.d&&D.dx[s.d.t]?.[s.d.id]) st.d=s.d; if(["chir","klby"].includes(s.tab)) st.tab=s.tab; if(["hip","knee"].includes(s.joint)) st.joint=s.joint; if(["p","n","r"].includes(s.km)) st.km=s.km; if(s.tab==="kardio") st.tab="kardio"; if(D.kd.dg.some(d=>d[0]===s.kdg)) st.kdg=s.kdg; if(D.kd.years.includes(s.ky)) st.ky=s.ky; if(["f","n","v","chg"].includes(s.kdm)) st.kdm=s.kdm; if(D.kd.hosp[s.kh]) st.kh=s.kh; if(D.sx.years.includes(s.cy)) st.cy=s.cy; if(s.op&&(s.op.t==="g"?D.sx.groups:D.sx.ops)[s.op.id]) st.op=s.op; if(["p","n","chg"].includes(s.cm)) st.cm=s.cm; if(!resOk()&&ZMAP[st.m]) st.m=ZMAP[st.m]; }catch(e){}
+const save=()=>{try{localStorage.setItem("sietSK2",JSON.stringify({g:st.g,m:st.m,y:st.y,d:st.d,tab:st.tab,cy:st.cy,op:st.op,cm:st.cm,joint:st.joint,km:st.km,kdg:st.kdg,ky:st.ky,kdm:st.kdm,kh:st.kh}))}catch(e){}};
 const my = () => M[st.m].years ? nearest(M[st.m].years, st.y) : st.y;
 const val = k => M[st.m].get(k, my());
 const srVal = () => M[st.m].srAvg ? M[st.m].srAvg() : M[st.m].get(SR, my());
@@ -929,11 +1003,11 @@ function renderChirAmb(){
 
 function renderChir(){ renderChirControls(); renderChirKpis(); renderChirMap(); renderChirSide(); renderChirBars(); renderChirTrend(); renderChirOps(); renderChirTech(); renderChirDep(); renderChirJzs(); renderChirEm(); renderChirAmb(); }
 
-const VIEWS={main:{el:"view-main",hash:"",title:"Zdravotná sieť Slovenska"},chir:{el:"view-chir",hash:"#chirurgia",title:"Chirurgia · Zdravotná sieť Slovenska"},klby:{el:"view-klby",hash:"#klby",title:"Kĺbové náhrady · Zdravotná sieť Slovenska"}};
+const VIEWS={main:{el:"view-main",hash:"",title:"Zdravotná sieť Slovenska"},chir:{el:"view-chir",hash:"#chirurgia",title:"Chirurgia · Zdravotná sieť Slovenska"},klby:{el:"view-klby",hash:"#klby",title:"Kĺbové náhrady · Zdravotná sieť Slovenska"},kardio:{el:"view-kardio",hash:"#kardiologia",title:"Kardiológia · Zdravotná sieť Slovenska"}};
 function renderTabs(){
   for(const [id,v] of Object.entries(VIEWS)) document.getElementById(v.el).hidden = st.tab!==id;
   document.getElementById("specWrap").hidden=st.tab!=="main"; document.getElementById("dxWrap").hidden=st.tab!=="main";
-  document.getElementById("opWrap").hidden=st.tab!=="chir"; document.getElementById("jointSeg").hidden=st.tab!=="klby"; document.getElementById("yearSeg").hidden=st.tab==="klby";
+  document.getElementById("opWrap").hidden=st.tab!=="chir"; document.getElementById("jointSeg").hidden=st.tab!=="klby"; document.getElementById("kdWrap").hidden=st.tab!=="kardio"; document.getElementById("yearSeg").hidden=st.tab==="klby";
   document.querySelectorAll("#tabs button").forEach(b=>{ b.setAttribute("aria-pressed",b.dataset.tab===st.tab); b.onclick=()=>{ if(st.tab===b.dataset.tab) return; st.tab=b.dataset.tab; try{ history.replaceState(null,"",VIEWS[st.tab].hash||location.pathname); }catch(e){} save(); renderAll(); window.scrollTo(0,0); }; });
   document.title = VIEWS[st.tab].title;
 }
@@ -1091,8 +1165,169 @@ function renderKlbyReas(){
 
 function renderKlby(){ renderKlbyControls(); renderKlbyKpis(); renderKlbyMap(); renderKlbySide(); renderKlbyDeps(); renderKlbyTrend(); renderKlbyFix(); renderKlbyCem(); renderKlbyPat(); renderKlbyReas(); }
 
+/* ---------- Kardiológia ---------- */
+const KD = D.kd, KDY = KD.years, KDBASE = "2019";
+const KDN = Object.fromEntries(KD.dg);
+const kdPop = (k,y) => popOf(k, y < HY[0] ? HY[0] : nearest(HY,y));
+const kdF = (k,y,dg=st.kdg) => KD.fol[y]?.[dg]?.[TI(k)] ?? null;
+const kdN = (k,y,dg=st.kdg) => KD.new[y]?.[dg]?.[TI(k)] ?? null;
+const kdV = (k,y) => KD.vis[y]?.[TI(k)] ?? null;
+const KDM = {
+  f:{label:"Sledovaní / 1 000 ob.", long:"Sledované osoby na 1 000 obyvateľov", title:["Sledovaní pacienti","na 1 000 obyvateľov"], fmt:f1, get:(k,y)=>{const v=kdF(k,y);return v==null?null:v/kdPop(k,y)*1000;}},
+  n:{label:"Novo prijatí / 100 tis.", long:"Osoby prijaté do sledovania na 100 tis. obyvateľov", title:["Novo prijatí","na 100 000 obyvateľov"], fmt:f0, get:(k,y)=>{const v=kdN(k,y);return v==null?null:v/kdPop(k,y)*1e5;}},
+  v:{label:"Návštevy / 1 000 ob.", long:"Návštevy kardiologických ambulancií na 1 000 obyvateľov (všetky diagnózy)", title:["Návštevy ambulancií","na 1 000 obyvateľov"], fmt:f0, get:(k,y)=>{const v=kdV(k,y);return v==null?null:v/kdPop(k,y)*1000;}},
+  chg:{label:"Zmena od 2013", long:"Zmena počtu sledovaných osôb od roku 2013", title:["Zmena sledovaných","od 2013"], fmt:v=>v==null?"–":(v>0?"+":"")+f0(v)+" %", div:true, get:(k,y)=>{const a=kdF(k,KDY[0]),b=kdF(k,y);return a&&b!=null&&y!==KDY[0]?(b/a-1)*100:null;}}
+};
+const kdVal = k => KDM[st.kdm].get(k, st.ky);
+function kdColor(v, vals){
+  if(v==null) return "var(--mid)";
+  if(KDM[st.kdm].div){ if(Math.abs(v)<5) return "var(--mid)"; if(v<0) return v<-15?"var(--n2)":"var(--n1)"; return v>35?"var(--p2)":"var(--p1)"; }
+  const vv=vals.filter(x=>x!=null), lo=Math.min(...vv), hi=Math.max(...vv), t=hi===lo?0:(v-lo)/(hi-lo);
+  return "var(--v"+Math.min(5,1+Math.floor(t*5))+")";
+}
+function lineChart(svgId, tipId, years, series, fmt, opts={}){
+  const svg=document.getElementById(svgId), W=460, H0=+svg.getAttribute("viewBox").split(" ")[3], L=62,R=18,T=16,B=28;
+  const y0=+years[0], y1=+years.at(-1), pts=s=>years.map(y=>({y:+y,v:s.vals(y)})).filter(p=>p.v!=null);
+  const all=series.flatMap(s=>pts(s).map(p=>p.v)); if(!all.length){ svg.innerHTML=""; return; }
+  const hi=Math.max(...all)*1.12||1, stp=Math.pow(10,Math.floor(Math.log10(hi/4))), tick=Math.ceil(hi/4/stp)*stp, top=tick*4;
+  const x=y=>L+(y-y0)/(y1-y0||1)*(W-L-R), yv=v=>T+(1-v/top)*(H0-T-B);
+  let h=`<defs><linearGradient id="${svgId}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a5bff" stop-opacity=".28"/><stop offset="1" stop-color="#7a5bff" stop-opacity="0"/></linearGradient></defs>`;
+  for(let g=0;g<=top+1e-9;g+=tick) h+=`<line x1="${L}" x2="${W-R}" y1="${yv(g)}" y2="${yv(g)}" style="stroke:var(--hair)"/><text x="${L-8}" y="${yv(g)+4}" style="fill:var(--muted);font:11px var(--mono);text-anchor:end">${tick>=1?f0(g):f1(g)}</text>`;
+  const every=years.length>9?2:1; years.forEach((y,i)=>{ if(i%every===0||i===years.length-1) h+=`<text x="${x(+y)}" y="${H0-8}" style="fill:var(--muted);font:10px var(--mono);text-anchor:middle">${y}</text>`; });
+  if(years.includes("2020")&&years.includes("2021")){ const a=x(2020)-8,b=x(2021)+8; h+=`<rect x="${a}" y="${T}" width="${b-a}" height="${H0-T-B}" style="fill:var(--tile)"/><text x="${(a+b)/2}" y="${T+11}" style="fill:var(--muted);font:10px var(--mono);text-anchor:middle">covid</text>`; }
+  const lastV=series.map(s=>pts(s).at(-1)?.v);
+  series.forEach((s,i)=>{ const p=pts(s); if(!p.length) return;
+    if(s.area) h+=`<path d="M${x(p[0].y)},${yv(0)} ${p.map(q=>`L${x(q.y)},${yv(q.v)}`).join(" ")} L${x(p.at(-1).y)},${yv(0)}Z" style="fill:url(#${svgId}g)"/>`;
+    for(let j=0;j<p.length-1;j++) h+=`<line x1="${x(p[j].y)}" y1="${yv(p[j].v)}" x2="${x(p[j+1].y)}" y2="${yv(p[j+1].v)}" style="stroke:${s.color};stroke-width:2.2;stroke-linecap:round${s.dash?";stroke-dasharray:"+s.dash:""}"/>`;
+    const sel=opts.sel&&p.find(q=>q.y===+opts.sel); if(sel) h+=`<circle cx="${x(sel.y)}" cy="${yv(sel.v)}" r="${s.area?6.5:4}" style="fill:${s.area?"var(--lime)":s.color};stroke:var(--ink);stroke-width:${s.area?1.5:0}"/>`;
+    const lp=p.at(-1), below=series.length>1&&lastV[i]<lastV[1-i]; h+=`<text x="${x(lp.y)-8}" y="${yv(lp.v)+(below?20:-11)}" style="fill:var(--ink);font:500 12px var(--mono);text-anchor:end">${fmt(lp.v)}</text>`; });
+  years.forEach(y=>h+=`<rect x="${x(+y)-14}" y="${T}" width="28" height="${H0-T-B}" style="fill:transparent" data-y="${y}" class="hit"/>`);
+  svg.innerHTML=h;
+  const tip=document.getElementById(tipId);
+  svg.querySelectorAll(".hit").forEach(r=>{ r.onmousemove=e=>tipAt(tip,svg.parentElement,e,`<div style="font-weight:600;margin-bottom:2px">${r.dataset.y}</div>`+series.map(s=>`${s.name}: <b>${fmt(s.vals(r.dataset.y))}</b>`).join("<br>"),220); r.onmouseleave=()=>tip.hidden=true; if(opts.onPick) clickable(r,()=>opts.onPick(r.dataset.y)); });
+}
+
+function renderKardioControls(){
+  const sel=document.getElementById("kdSel");
+  if(!sel.options.length){ sel.innerHTML=KD.dg.map(([id,n])=>`<option value="${id}">${esc(n)}</option>`).join(""); sel.onchange=()=>{ st.kdg=sel.value; save(); renderAll(); }; }
+  sel.value=st.kdg;
+  const ys=document.getElementById("yearSeg"); ys.innerHTML="";
+  for(const y of KDY){ const b=document.createElement("button"); b.type="button"; b.textContent=y; b.setAttribute("aria-pressed",st.ky===y); b.onclick=()=>{st.ky=y;save();renderAll();}; ys.appendChild(b); }
+  document.getElementById("kd_metric").innerHTML=Object.entries(KDM).map(([id,m])=>`<button type="button" id="kdm-${id}" aria-pressed="${st.kdm===id}">${m.label}</button>`).join("");
+  for(const id of Object.keys(KDM)) document.getElementById("kdm-"+id).onclick=()=>{st.kdm=id;save();renderAll();};
+  document.getElementById("kd_tag").textContent=KDN[st.kdg];
+}
+
+function renderKardioKpis(){
+  const k=st.sel||SR, y=st.ky, b=KDBASE, where=st.sel?"kraj "+st.sel:"Slovensko";
+  const dl=(a,c)=>{ if(y===b||a==null||!c) return `<span class="delta flat">${y===b?"základ":"–"}</span>`; const p=(a/c-1)*100; return `<span class="delta ${p>0.5?"up":p<-0.5?"down":"flat"}" title="Zmena oproti ${b}">${p>0?"▲ +":p<0?"▼ ":""}${f1(p)} %</span>`; };
+  const f=kdF(k,y), n=kdN(k,y), v=kdV(k,y), P=kdPop(k,y), hy=nearest(KD.hyears,y), hs=KD.hosp["Spolu"]?.[hy]?.[0], hb=KD.hosp["Spolu"]?.[b]?.[0], im=KD.hosp["I21 – Akútny infarkt myokardu"]?.[hy]?.[0];
+  const tiles=[
+    ["Sledovaní pacienti",f0(f),dl(f,kdF(k,b)),`<b>${f1(f/P*1000)}</b> na 1 000 obyvateľov`],
+    ["Novo prijatí",f0(n),dl(n,kdN(k,b)),`<b>${f0(n/P*1e5)}</b> na 100 tis. ob.`],
+    ["Návštevy ambulancií",f0(v),dl(v,kdV(k,b)),`<b>${f0(v/P*1000)}</b> na 1 000 ob. · všetky dg.`],
+    ["Hospitalizácie (SR)",f0(hs),hy===b?`<span class="delta flat">základ</span>`:dl(hs,hb),`akútny infarkt <b>${f0(im)}</b> · ${hy}`]
+  ];
+  document.getElementById("kd_kpis").innerHTML=`<div class="cap" style="grid-column:1/-1;margin:-2px 0 -4px 4px">${esc(KDN[st.kdg])} · ${where} · ${y}${y!==b?" · zmena oproti "+b:""}</div>`+tiles.map(t=>`<div class="kpi"><div class="row"><span class="cap">${t[0]}</span>${t[2]}</div><div class="v">${t[1]}</div><div class="sub">${t[3]}</div></div>`).join("");
+}
+
+function renderKardioMap(){
+  const m=KDM[st.kdm], svg=document.getElementById("kd_map"), vals=KR.map(kdVal);
+  document.getElementById("kd_mapTitle").innerHTML=`${m.title[0]} <em>${m.title[1]}</em><span class="mono" style="font-size:13px;color:var(--muted);margin-left:8px">${m.div?KDY[0]+"→"+st.ky:st.ky}</span>`;
+  document.getElementById("kd_mapNote").textContent=(st.kdm==="v"?"Všetky diagnózy":KDN[st.kdg])+" · podľa sídla ambulancie";
+  let h="";
+  for(const k of KR) h+=`<path class="region" data-k="${k}" tabindex="0" role="button" aria-label="${k} kraj: ${m.fmt(kdVal(k))}" d="${D.shapes[k].d}" style="fill:${kdColor(kdVal(k),vals)}"></path>`;
+  if(st.sel) h+=`<path d="${D.shapes[st.sel].d}" style="fill:none;stroke:var(--ink);stroke-width:3;pointer-events:none;stroke-linejoin:round"></path>`;
+  for(const k of KR){ const s=D.shapes[k], v=kdVal(k), ink=inkOn(kdColor(v,vals)), dx=k==="Bratislavský"?-4:0, dy=k==="Bratislavský"?18:0;
+    if(st.sel===k) h+=`<circle cx="${s.cx+dx}" cy="${s.cy+dy-30}" r="7" style="fill:var(--lime);stroke:var(--ink);stroke-width:1.5"/>`;
+    h+=`<text class="lbl" x="${s.cx+dx}" y="${s.cy+dy-4}" style="fill:${ink}">${AB[k]}</text><text class="lblv" x="${s.cx+dx}" y="${s.cy+dy+13}" style="fill:${ink}">${m.fmt(v)}</text>`; }
+  svg.innerHTML=h;
+  const tip=document.getElementById("kd_tip"), box=svg.closest(".mapbox");
+  svg.querySelectorAll(".region").forEach(p=>{ const k=p.dataset.k; clickable(p,()=>select(k));
+    p.onmousemove=e=>tipAt(tip,box,e,`<div style="font-weight:600;margin-bottom:2px">${k} kraj</div>${m.long}: <b>${m.fmt(kdVal(k))}</b><br>Slovensko: <span class="mono">${m.fmt(m.get(SR,st.ky))}</span><br>Sledovaní: <span class="mono">${f0(kdF(k,st.ky))}</span>`);
+    p.onmouseleave=()=>tip.hidden=true; });
+  const lg=document.getElementById("kd_legend");
+  if(m.div) lg.innerHTML=[["var(--n2)","pokles >15 %"],["var(--n1)","pokles 5–15 %"],["var(--mid)","±5 %"],["var(--p1)","rast 5–35 %"],["var(--p2)","rast >35 %"]].map(([c,t])=>`<span><i style="background:${c}"></i>${t}</span>`).join("");
+  else { const vv=vals.filter(x=>x!=null), lo=Math.min(...vv), hi=Math.max(...vv), s=(hi-lo)/5; lg.innerHTML=[1,2,3,4,5].map(i=>`<span><i style="background:var(--v${i})"></i>${m.fmt(lo+s*(i-1))}–${m.fmt(lo+s*i)}</span>`).join(""); }
+}
+
+function renderKardioSide(){
+  const k=st.sel||SR, isSR=k===SR, y=st.ky, P=kdPop(k,y), Ps=kdPop(SR,y);
+  const a=KD.folAge[y]?.[st.kdg], i=TI(k), ag=a?a.slice(i*12,i*12+12):null, tot=ag?ag.reduce((s,v)=>s+v,0):0, wom=ag?ag.slice(6).reduce((s,v)=>s+v,0):0, o65=ag?[3,4,5,9,10,11].reduce((s,j)=>s+ag[j],0):0;
+  const rows=[["sect",`${esc(KDN[st.kdg])} · ${y}`],["Sledovaní pacienti",f0(kdF(k,y)),f0(kdF(SR,y))],["Na 1 000 obyvateľov",f1(kdF(k,y)/P*1000),f1(kdF(SR,y)/Ps*1000)],["Novo prijatí",f0(kdN(k,y)),f0(kdN(SR,y))],["Novo prijatí na 100 tis.",f0(kdN(k,y)/P*1e5),f0(kdN(SR,y)/Ps*1e5)],["Ženy",tot?f1(wom/tot*100)+" %":"–",""],["65 a viac rokov",tot?f1(o65/tot*100)+" %":"–",""]];
+  rows.push(["sect","Ambulancie · všetky diagnózy"],["Návštevy",f0(kdV(k,y)),f0(kdV(SR,y))],["Návštevy na 1 000 ob.",f0(kdV(k,y)/P*1000),f0(kdV(SR,y)/Ps*1000)],["Návštevy na sledovaného",f1(kdV(k,y)/kdF(k,y,"all")),f1(kdV(SR,y)/kdF(SR,y,"all"))]);
+  const el=document.getElementById("kd_side");
+  el.innerHTML=`<div class="who"><span class="badge">${isSR?"SK":AB[k]}</span><div><div class="cap">${isSR?"Celé Slovensko":"Vybraný kraj"}</div><h2 style="font-size:24px">${isSR?"Slovenská <em>republika</em>":esc(k)+" <em>kraj</em>"}</h2></div></div>
+   <div class="kv"><span class="h"></span><span class="h" style="text-align:right">${isSR?"":"Kraj"}</span><span class="h" style="text-align:right">SR</span>
+   ${rows.map(r=>r[0]==="sect"?`<span class="sect">${r[1]}</span>`:`<span>${r[0]}</span><span class="val">${isSR&&r[2]!==""?"":r[1]}</span><span class="sr">${isSR&&r[2]===""?r[1]:r[2]}</span>`).join("")}</div>
+   ${isSR?`<p class="note" style="margin:0">Kliknite na kraj pre detail.</p>`:`<button class="linkbtn" id="kd_back">Späť na celé Slovensko</button>`}`;
+  document.getElementById("kd_back")?.addEventListener("click",()=>select(null));
+}
+
+function renderKardioBars(){
+  const m=KDM[st.kdm], rows=KR.map(k=>({k,v:kdVal(k)})).sort((a,b)=>(b.v??-1e9)-(a.v??-1e9)), avg=m.get(SR,st.ky);
+  document.getElementById("kd_rankNote").innerHTML=`${m.long} · ${st.ky} · čiarkovane Slovensko <span class="mono">${m.fmt(avg)}</span>`;
+  const vs=rows.map(r=>r.v??0), lo=Math.min(0,...vs), hi=Math.max(...vs,avg??0,1e-9), pct=v=>(v-lo)/(hi-lo)*100, box=document.getElementById("kd_bars");
+  box.innerHTML=rows.map(r=>`<div class="bar${st.sel===r.k?" sel":""}" data-k="${r.k}" role="button" tabindex="0"><span>${r.k}</span>
+    <span class="track"><span class="fill" style="left:${pct(Math.min(0,r.v??0))}%;width:${Math.max(1.5,Math.abs(pct(r.v??0)-pct(0)))}%;${(r.v??0)<0?"background:var(--orange)":""}"></span>${avg!=null?`<span class="avg" style="left:${pct(avg)}%"></span>`:""}</span>
+    <span class="v">${m.fmt(r.v)}</span></div>`).join("");
+  box.querySelectorAll(".bar").forEach(b=>clickable(b,()=>select(b.dataset.k)));
+}
+
+function renderKardioTrend(){
+  const mid=KDM[st.kdm].div?"f":st.kdm, m=KDM[mid];
+  const cmp=st.sel||KR.slice().sort((a,b)=>(m.get(b,st.ky)??0)-(m.get(a,st.ky)??0))[0];
+  document.getElementById("kd_trendNote").textContent=`${m.long}${mid!=="v"?" · "+KDN[st.kdg]:""}`;
+  const series=[{name:"Slovensko",color:"#85878f",dash:"4 4",vals:y=>m.get(SR,y)},{name:cmp+" kraj",color:"var(--violet)",area:true,vals:y=>m.get(cmp,y)}];
+  document.getElementById("kd_trendLegend").innerHTML=series.map(s=>`<span><i style="background:${s.color};height:4px;width:16px"></i>${s.name}</span>`).join("");
+  lineChart("kd_trend","kd_tip2",KDY,series,m.fmt,{sel:st.ky,onPick:y=>{st.ky=y;save();renderAll();}});
+}
+
+function renderKardioDg(){
+  const k=st.sel||SR, y=st.ky, P=kdPop(k,y);
+  document.getElementById("kd_dgNote").textContent=`${st.sel?"Kraj "+st.sel:"Slovensko"} · ${y} · sledovaní k 31. 12. · kliknutím vyberiete`;
+  const rows=KD.dg.slice(1).map(([id,n])=>({id,n,v:kdF(k,y,id)||0,meta:`${f1((kdF(k,y,id)||0)/P*1000)} na 1 000 ob. · novo prijatí ${f0(kdN(k,y,id))}`})).sort((a,b)=>b.v-a.v);
+  dgRows(document.getElementById("kd_dg"), rows, r=>{ st.kdg=st.kdg===r.id?"all":r.id; save(); renderAll(); }, r=>st.kdg===r.id);
+}
+
+function renderKardioAge(){
+  const k=st.sel||SR, y=st.ky, a=KD.folAge[y]?.[st.kdg], i=TI(k), svg=document.getElementById("kd_pyr");
+  const L=["0–24","25–44","45–64","65–74","75–84","85+"];
+  document.getElementById("kd_ageNote").textContent=`${KDN[st.kdg]} · ${st.sel?"kraj "+st.sel:"Slovensko"} · ${y}`;
+  if(!a){ svg.innerHTML=""; document.getElementById("kd_ageSum").innerHTML=""; return; }
+  const g=a.slice(i*12,i*12+12), n=6, rowH=26, T=6, cx=230, gap=26, mx=Math.max(1,...g), half=cx-gap-50, sc=v=>v/mx*half;
+  let h=""; for(let j=0;j<n;j++){ const r=n-1-j, yy=T+j*rowH, m=g[r], w=g[r+6];
+    h+=`<rect x="${cx-gap-sc(m)}" y="${yy}" width="${sc(m)}" height="${rowH-7}" rx="4" style="fill:var(--ink)"><title>Muži ${L[r]}: ${f0(m)}</title></rect><rect x="${cx+gap}" y="${yy}" width="${sc(w)}" height="${rowH-7}" rx="4" style="fill:var(--violet)"><title>Ženy ${L[r]}: ${f0(w)}</title></rect>`;
+    h+=`<text x="${cx}" y="${yy+rowH/2+1}" style="fill:var(--ink2);text-anchor:middle">${L[r]}</text><text x="${cx-gap-sc(m)-6}" y="${yy+rowH/2+1}" style="fill:var(--muted);text-anchor:end">${f0(m)}</text><text x="${cx+gap+sc(w)+6}" y="${yy+rowH/2+1}" style="fill:var(--muted)">${f0(w)}</text>`; }
+  svg.setAttribute("viewBox",`0 0 460 ${T+n*rowH}`); svg.innerHTML=h;
+  const tot=g.reduce((s,v)=>s+v,0), wom=g.slice(6).reduce((s,v)=>s+v,0), o65=[3,4,5,9,10,11].reduce((s,j)=>s+g[j],0);
+  const a0=KD.folAge[KDY[0]]?.[st.kdg]?.slice(i*12,i*12+12), t0=a0?a0.reduce((s,v)=>s+v,0):0, o0=a0?[3,4,5,9,10,11].reduce((s,j)=>s+a0[j],0):0;
+  document.getElementById("kd_ageSum").innerHTML=`<span>Spolu <b>${f0(tot)}</b></span><span>Ženy <b>${f1(wom/tot*100)} %</b></span><span>65+ rokov <b>${f1(o65/tot*100)} %</b>${t0&&y!==KDY[0]?` <span class="mono" style="font-size:12px;color:var(--muted)">(${KDY[0]}: ${f1(o0/t0*100)} %)</span>`:""}</span>`;
+}
+
+function renderKardioHosp(){
+  const H=KD.hosp, hy=nearest(KD.hyears,st.ky), b="2014", grp=H[st.kh]?st.kh:"Spolu";
+  document.getElementById("kd_hNote").textContent=`Slovensko · ${KD.hyears[0]}–${KD.hyears.at(-1)} · ${grp==="Spolu"?"všetky choroby obehovej sústavy":grp} · kliknutím na skupinu zobrazíte jej vývoj`;
+  lineChart("kd_htrend","kd_tip3",KD.hyears,[{name:grp==="Spolu"?"Spolu":grp.replace(/\s*\(.*$/,""),color:"var(--violet)",area:true,vals:y=>H[grp]?.[y]?.[0]??null}],f0,{sel:hy});
+  const rows=Object.entries(H).filter(([n])=>n!=="Spolu").map(([n,v])=>{ const sub=/^I\d\d –/.test(n), c=v[hy]?.[0]||0, c0=v[b]?.[0]; return {id:n,n:(sub?"↳ ":"")+n,v:c,meta:`${c0?`${b}→${hy}: ${c>=c0?"+":""}${f0((c/c0-1)*100)} %`:""} · 65+ rokov ${c?f0(((v[hy][4]||0)+(v[hy][5]||0)+(v[hy][6]||0))/c*100):"–"} %`}; }).filter(r=>r.v>0);
+  const top=rows.filter(r=>!r.n.startsWith("↳")).sort((a,c)=>c.v-a.v), out=[];
+  for(const r of top){ out.push(r); if(r.id.startsWith("Ischemické")) out.push(...rows.filter(x=>x.n.startsWith("↳")).sort((a,c)=>c.v-a.v)); }
+  dgRows(document.getElementById("kd_h"), out.slice(0,14), r=>{ st.kh=st.kh===r.id?"Spolu":r.id; save(); renderKardioHosp(); }, r=>st.kh===r.id);
+}
+
+function renderKardioProg(){
+  const k=st.sel, g=D.groups.find(x=>x.id==="kardio"), rows=D.hosp.filter(h=>(!k||h.k===k)&&g.progs.some(p=>h.p[p[0]]));
+  const score=h=>g.progs.reduce((s,p)=>s+(h.p[p[0]]||0),0); rows.sort((a,b)=>score(b)-score(a)||a.n.localeCompare(b.n,"sk"));
+  document.getElementById("kd_progNote").textContent=`${k?"Kraj "+k:"Slovensko"} · ${rows.length} nemocníc s kardiologickým alebo kardiochirurgickým programom · kategorizácia 2026`;
+  const cell=v=>v?`<span class="chip${v>=4?" hi":""}">${RNk[v]}</span>`:`<span class="dash">—</span>`;
+  document.getElementById("kd_prog").innerHTML=`<thead><tr><th style="cursor:default">Nemocnica</th>${g.progs.map(p=>`<th style="cursor:default;text-align:center" title="${esc(p[2])}">${esc(p[1])}</th>`).join("")}</tr></thead><tbody>`+
+    rows.slice(0,k?40:18).map(h=>`<tr><td>${esc(h.n)}${k?"":`<span style="color:var(--muted);font-size:11px;display:block">${esc(h.k)}</span>`}</td>${g.progs.map(p=>`<td class="c">${cell(h.p[p[0]])}</td>`).join("")}</tr>`).join("")+`</tbody>`;
+}
+
+function renderKardio(){ renderKardioControls(); renderKardioKpis(); renderKardioMap(); renderKardioSide(); renderKardioBars(); renderKardioTrend(); renderKardioDg(); renderKardioAge(); renderKardioHosp(); renderKardioProg(); }
+
 function select(k){ st.sel = st.sel===k ? null : k; renderAll(); }
-function renderAll(){ renderTabs(); if(st.tab==="chir"){ renderChir(); return; } if(st.tab==="klby"){ renderKlby(); return; } renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
-try{ if(location.hash==="#chirurgia") st.tab="chir"; if(location.hash==="#klby") st.tab="klby"; }catch(e){}
+function renderAll(){ renderTabs(); if(st.tab==="chir"){ renderChir(); return; } if(st.tab==="klby"){ renderKlby(); return; } if(st.tab==="kardio"){ renderKardio(); return; } renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
+try{ if(location.hash==="#chirurgia") st.tab="chir"; if(location.hash==="#klby") st.tab="klby"; if(location.hash==="#kardiologia") st.tab="kardio"; }catch(e){}
 renderAll();
 </script>
