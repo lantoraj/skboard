@@ -573,6 +573,187 @@ def cardiology():
             "hosp": hosp, "hyears": hy, "hages": ["0–24", "25–44", "45–64", "65–74", "75–84", "85+", "neznáma"]}
 
 
+# incidence groups: id, name, ICD-10 three-character codes
+ONCO_DG = [
+    ("all", "Zhubné nádory spolu (C00–C96 bez C44)", None),
+    ("crc", "Hrubé črevo a konečník (C18–C21)", ["C18", "C19", "C20", "C21"]),
+    ("lung", "Priedušnica a pľúca (C33–C34)", ["C33", "C34"]),
+    ("c50", "Prsník (C50)", ["C50"]),
+    ("c61", "Prostata (C61)", ["C61"]),
+    ("hn", "Hlava a krk (C00–C14, C30–C32)", [f"C{i:02d}" for i in range(15)] + ["C30", "C31", "C32"]),
+    ("c16", "Žalúdok (C16)", ["C16"]),
+    ("c15", "Pažerák (C15)", ["C15"]),
+    ("liv", "Pečeň a žlčové cesty (C22–C24)", ["C22", "C23", "C24"]),
+    ("c25", "Pankreas (C25)", ["C25"]),
+    ("c43", "Melanóm (C43)", ["C43"]),
+    ("c53", "Krčok maternice (C53)", ["C53"]),
+    ("ut", "Telo maternice (C54–C55)", ["C54", "C55"]),
+    ("c56", "Vaječník (C56)", ["C56"]),
+    ("c62", "Semenník (C62)", ["C62"]),
+    ("kid", "Oblička (C64–C65)", ["C64", "C65"]),
+    ("c67", "Močový mechúr (C67)", ["C67"]),
+    ("cns", "Mozog a CNS (C70–C72)", ["C70", "C71", "C72"]),
+    ("c73", "Štítna žľaza (C73)", ["C73"]),
+    ("hem", "Lymfómy, myelóm a leukémie (C81–C96)", [f"C{i}" for i in range(81, 97)]),
+    ("c44", "Iné zhubné nádory kože (C44)", ["C44"]),
+]
+
+
+def onco_groups(code):
+    """Incidence groups that contain an ICD-10 three-character code."""
+    if not re.fullmatch(r"C\d\d", code):
+        return []
+    out = [g for g, _, codes in ONCO_DG if codes and code in codes]
+    if code != "C44" and code <= "C96":
+        out.append("all")
+    return out
+
+
+def oncology():
+    """NCZI cancer incidence 2012–2015, C01/C03/C04 datasets 2013–2024 and yearbooks 2019–2024."""
+    src = DATA / "nczi_onkologia"
+    ab13 = ["SR", "BL", "TA", "TC", "NI", "ZI", "BC", "PV", "KI"]
+    ab12 = ["SR", "BA kraj", "TT kraj", "TN kraj", "NR kraj", "ZA kraj", "BB kraj", "PV kraj", "KE kraj"]
+    ids = [g for g, _, _ in ONCO_DG]
+    n = lambda v: 0 if num(v) is None else num(v)
+
+    def code_rows(d):
+        for r in d.itertuples(index=False):
+            c = str(r[0]).strip().replace("C96, D45", "C96")
+            if c.startswith("z toho") and "C44" in c:  # 2013+ list C44 only as "of which" row under the total
+                c = "C44"
+            if re.fullmatch(r"[CD]\d\d", c):
+                yield c, r
+
+    inc, pop, mort, age, stage = {}, {}, {}, {}, {}
+    for f in sorted(src.glob("incidencia_zhubnych_nadorov_*.xlsx")):
+        y = f.stem[-4:]
+        old = y == "2012"
+        sheets = [("Tabuľka 2 " + a) if old else ("T2_1_SR" if a == "SR" else "T2_2_" + a) for a in (ab12 if old else ab13)]
+        inc[y], pop[y] = {g: [0] * 18 for g in ids}, [0] * 18
+        for t, s in enumerate(sheets):
+            d = pd.read_excel(f, sheet_name=s, header=None)
+            for c, r in code_rows(d):
+                for g in onco_groups(c):
+                    inc[y][g][t * 2] += n(r[1]); inc[y][g][t * 2 + 1] += n(r[5])
+            # population by sex from the largest row: count / crude rate
+            for sx, (ci, cr) in enumerate([(1, 3), (5, 7)]):
+                rows = [(n(r[ci]), n(r[cr])) for c, r in code_rows(d) if n(r[cr]) > 0]
+                cnt, rate = max(rows)
+                pop[y][t * 2 + sx] = round(cnt / rate * 1e5)
+        for g in ids:
+            inc[y][g] = [int(v) for v in inc[y][g]]
+        d = pd.read_excel(f, sheet_name="Tabuľka 6" if old else "T5", header=None)
+        mort[y] = {g: [0, 0] for g in ids}
+        for c, r in code_rows(d):
+            for g in onco_groups(c):
+                mort[y][g][0] += int(n(r[1])); mort[y][g][1] += int(n(r[5]))
+        stage[y] = {g: [0] * 10 for g in ids}
+        for sx, s in enumerate(["Tabuľka 5A", "Tabuľka 5B"] if old else ["T4_1", "T4_2"]):
+            d = pd.read_excel(f, sheet_name=s, header=None)
+            for c, r in code_rows(d):
+                for g in onco_groups(c):
+                    for i in range(5):
+                        stage[y][g][sx * 5 + i] += int(n(r[1 + 2 * i]))
+        if not old:
+            age[y] = {g: [0] * 36 for g in ids}
+            for sx, s in enumerate(["T3_1", "T3_2"]):
+                d = pd.read_excel(f, sheet_name=s, header=None)
+                for c, r in code_rows(d):
+                    if str(r[1]).strip() != "A":
+                        continue
+                    for g in onco_groups(c):
+                        for i in range(18):
+                            age[y][g][sx * 18 + i] += int(n(r[3 + i]))
+    for y in inc:  # sanity: sum of codes vs. the "Spolu bez C44" row of the SR table
+        d = pd.read_excel(src / f"incidencia_zhubnych_nadorov_{y}.xlsx", sheet_name="Tabuľka 2 SR" if y == "2012" else "T2_1_SR", header=None)
+        row = next((r for r in d.itertuples(index=False) if str(r[0]).startswith("Spolu bez")), None)
+        insitu = [sum(n(r[i]) for c, r in code_rows(d) if "D00" <= c <= "D09") for i in (1, 5)]
+        if row is not None:  # the total row includes in-situ tumours D00–D09
+            assert abs(n(row[1]) - insitu[0] - inc[y]["all"][0]) < 5 and abs(n(row[5]) - insitu[1] - inc[y]["all"][1]) < 5, (y, row[1], inc[y]["all"][:2])
+        print(f"  incidence {y}: SR {inc[y]['all'][0] + inc[y]['all'][1]} cases (bez C44)")
+
+    # C04 clinical oncology, SR + regions (residence of the clinic)
+    terr = [SR] + [k + " kraj" for k in KR]
+    d = pd.read_excel(src / "C04_2013_2024_dataset.xlsx", sheet_name="SUM_3101_4102")
+    d["t"] = d.UZEMIE_POPIS.map(lambda s: terr.index(str(s).strip()) if str(s).strip() in terr else -1)
+    d = d[d.t >= 0]
+    tr_cols = {"vis": ["NAV_P_0018", "NAV_P_19"], "onk": ["VYS_ONKOP_0018", "VYS_ONKOP_19"], "prev": ["VYS_PREV_0018", "VYS_PREV_19"],
+               "chem": ["P_CHEMOT"], "horm": ["P_HORM_LIEC"], "bio": ["P_BIOL_LIEC"], "imu": ["P_IMUNOT"], "pal": ["P_PALIA_LIEC"]}
+    cost_cols = {"cyt": "VN_CYTOST", "bio": "VN_BIOL_LIEC", "horm": "VN_HORM_PRIP", "rast": "VN_RAST_FAK", "imu": "VN_IMUNOMOD", "antiem": "VN_ANTIEM", "atb": "VN_ANTI_CHEM"}
+    tr, cost = {}, {}
+    for r in d.itertuples(index=False):
+        y = str(r.ROK_SPRAC)
+        for k, cols in tr_cols.items():
+            vals = [num(getattr(r, c)) for c in cols]
+            tr.setdefault(y, {}).setdefault(k, [None] * 9)[r.t] = None if all(v is None for v in vals) else int(sum(v or 0 for v in vals))
+        for k, c in cost_cols.items():
+            v = num(getattr(r, c))
+            if v is not None:
+                cost.setdefault(y, {}).setdefault(k, [None] * 9)[r.t] = round(v)
+
+    # C03 radiation oncology (SR only)
+    c03 = src / "C03_2013_2024_dataset.xlsx"
+    d = pd.read_excel(c03, sheet_name="SUM_2104_3601")
+    dev_cols = {"Lineárne urýchľovače s volumetrickým zobrazením": ["PRIS_LIN_URY_VOL_ZOB"], "Lineárne urýchľovače so stereotaxiou": ["PRIS_LIN_URY_SO_STE"],
+                "Lineárne urýchľovače s portálovým zobrazením": ["PRIS_LIN_URY_S_PZ"], "Lineárne urýchľovače bez zobrazenia": ["PRIS_LIN_URY_BEZ_PZ"],
+                "Kobaltové ožarovače (Co60)": ["PRIS_RDN_OZAR_CO60"], "RTG terapeutické prístroje": ["PRIS_RTG_TERAP"], "Afterloading (brachyterapia)": ["PRIS_AUTOM_AFTLOA"],
+                "Simulátory": ["PRIS_SIMUL"], "Plánovacie systémy": ["PRIS_SYS_PLAN_LIEC"]}
+    pat_cols = {"Kuratívna externá rádioterapia": "P_TER_PNAD_KU_EX_RAD", "Paliatívna externá rádioterapia": "P_TER_PNAD_PA_EX_RAD", "Kuratívna brachyterapia": "P_TER_PNAD_KU_BRACH",
+                "Paliatívna brachyterapia": "P_TER_PNAD_PA_BRACH", "Nenádorová externá rádioterapia": "P_TER_NENAD_EX_RAD", "Nenádorová brachyterapia": "P_TER_NENAD_BRACH"}
+    vyk_cols = {"Lineárne urýchľovače": "VYK_PNAD_EX_RAD_LIN", "Rádionuklidové (Co60)": "VYK_PNAD_EX_RAD_NUK", "RTG terapia": "VYK_PNAD_EX_RAD_RTG", "Brachyterapia": "VYK_PNAD_BRACH"}
+    dev, rpat, vyk, rvis = {}, {}, {}, {}
+    for r in d.itertuples(index=False):
+        y = str(r.ROK_SPRAC)
+        dev[y] = {k: int(sum(n(getattr(r, c)) for c in cs)) for k, cs in dev_cols.items()}
+        rpat[y] = {k: int(n(getattr(r, c))) for k, c in pat_cols.items()}
+        vyk[y] = {k: int(n(getattr(r, c))) for k, c in vyk_cols.items()}
+        rvis[y] = {"vis": int(n(r.NAV_P_0018) + n(r.NAV_P_19)), "plan": int(n(r.VYS_OZAR_0018) + n(r.VYS_OZAR_19)), "ct": int(n(r.VYS_CT_SKEN_0018) + n(r.VYS_CT_SKEN_19))}
+    d = pd.read_excel(c03, sheet_name="SUM_3410")
+    rdg = {}
+    for r in d.itertuples(index=False):
+        y = str(r.ROK_SPRAC)
+        for g in onco_groups(str(r.CIS_MKCH10_3).strip()):
+            a = rdg.setdefault(y, {}).setdefault(g, [0, 0])
+            a[0] += int(n(r.PAC_LIEC_ZIAR_M)); a[1] += int(n(r.PAC_LIEC_ZIAR_Z))
+        a = rdg.setdefault(y, {}).setdefault("tot", [0, 0])
+        a[0] += int(n(r.PAC_LIEC_ZIAR_M)); a[1] += int(n(r.PAC_LIEC_ZIAR_Z))
+
+    # C01 nuclear medicine (SR only)
+    c01 = src / "C01_2013_2024_dataset.xlsx"
+    d = pd.read_excel(c01, sheet_name="SUM_3111A")
+    organ = {}
+    for r in d.itertuples(index=False):
+        o = organ.setdefault(str(r.ROK_SPRAC), {}).setdefault(str(r.CISV_RN_VYS_2_CI_POP).strip(), 0)
+        organ[str(r.ROK_SPRAC)][str(r.CISV_RN_VYS_2_CI_POP).strip()] = o + int(n(r.VYS))
+    d = pd.read_excel(c01, sheet_name="SUM_3111B")
+    pet = {y: int(s.VYS_TOM_HYB.map(n).sum()) for y, s in d.groupby(d.ROK_SPRAC.astype(str))}
+    d = pd.read_excel(c01, sheet_name="SUM_3104_2103")
+    ther_cols = {"Hyperfunkcia štítnej žľazy": "HYP_SZ", "Karcinóm štítnej žľazy": "KAR_SZ", "Metastázy karcinómu prostaty": "MET_KAR", "Neuroendokrinné nádory (Lu)": "NEN_LURA",
+                 "Neuroendokrinné nádory": "NEU_NAD", "Kostné metastázy": "KOS_ME", "Pečeňové metastázy": "PEC_ME", "Lymfómy": "LYMF", "Nádory krvotvorného tkaniva": "NAD_KT",
+                 "Rádiosynoviortéza": "RADIOS", "Iná liečba rádiofarmakami": "INA_RAD"}
+    ther, nvis = {}, {}
+    for r in d.itertuples(index=False):
+        y = str(r.ROK_SPRAC)
+        ther[y] = {k: int(n(getattr(r, f"APL_LIEC_{c}_PA", 0)) + n(getattr(r, f"APL_LIEC_{c}_PH", 0))) for k, c in ther_cols.items()}
+        nvis[y] = {"vis": int(sum(n(getattr(r, c)) for c in ["NAV_PA_0018", "NAV_PA_19", "NAV_PH_0018", "NAV_PH_19"])),
+                   "exam": int(sum(n(getattr(r, c)) for c in ["VYS_RDN_PA_0018", "VYS_RDN_PA_19", "VYS_RDN_PH_0018", "VYS_RDN_PH_19"]))}
+
+    # yearbooks: facilities and staff (SR row of T1.1 / T2.1 / T3.1)
+    staff = {}
+    for f in sorted(src.glob("Cinnost_nuklearnej_mediciny_*.xlsx")):
+        y, xl = f.stem[-4:], pd.ExcelFile(f)
+        for key, base in [("nm", "T1"), ("ko", "T2"), ("ro", "T3")]:
+            s = next(s for s in xl.sheet_names if s.replace(".", "_") == base + "_1")
+            d = pd.read_excel(xl, sheet_name=s, header=None)
+            r = next(r for r in d.itertuples(index=False) if str(r[0]).startswith("Slovensk"))
+            staff.setdefault(y, {})[key] = [int(n(r[1])), round(n(r[2]), 1), round(n(r[3]), 1)]
+
+    return {"dg": [[g, nm] for g, nm, _ in ONCO_DG], "iy": sorted(inc), "inc": inc, "pop": pop, "mort": mort, "age": age, "stage": stage,
+            "ty": sorted(tr), "tr": tr, "cost": cost, "ry": sorted(dev), "dev": dev, "rpat": rpat, "vyk": vyk, "rvis": rvis, "rdg": rdg,
+            "organ": organ, "pet": pet, "ther": ther, "nvis": nvis, "staff": staff}
+
+
 def main():
     stats, years = network()
     hosp, groups = hospitals()
@@ -581,8 +762,9 @@ def main():
     sx = surgery()
     ar = sar()
     kd = cardiology()
+    on = oncology()
     data = {"groups": groups, "stats": stats, "hosp": hosp, "shapes": shapes(), "years": years,
-            "hs": hs, "popY": pop, "flows": flows, "chn": chn, "dg": dg, "dx": dx, "sx": sx, "ar": ar, "kd": kd, "hyears": sorted(pop)}
+            "hs": hs, "popY": pop, "flows": flows, "chn": chn, "dg": dg, "dx": dx, "sx": sx, "ar": ar, "kd": kd, "on": on, "hyears": sorted(pop)}
     page = (ROOT / "template.html").read_text(encoding="utf-8").replace("__DATA__", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     # template.html is an artifact body; a standalone host needs the document shell (charset!) around it
     head_end = page.index("</style>") + len("</style>")

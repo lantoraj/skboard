@@ -187,12 +187,13 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
 <div class="wrap">
   <nav class="top" aria-label="Nastavenia">
     <div class="brand"><span class="badge">SK</span>Zdravotná sieť</div>
-    <div class="pills tabs" role="group" aria-label="Pohľad" id="tabs"><button type="button" data-tab="main">Prehľad</button><button type="button" data-tab="chir">Chirurgia</button><button type="button" data-tab="klby">Kĺbové náhrady</button><button type="button" data-tab="kardio">Kardiológia</button></div>
+    <div class="pills tabs" role="group" aria-label="Pohľad" id="tabs"><button type="button" data-tab="main">Prehľad</button><button type="button" data-tab="chir">Chirurgia</button><button type="button" data-tab="klby">Kĺbové náhrady</button><button type="button" data-tab="kardio">Kardiológia</button><button type="button" data-tab="onko">Onkológia</button></div>
     <div class="topr">
       <div class="selwrap" id="specWrap"><label for="spec" style="position:absolute;left:-9999px">Odbornosť</label><select id="spec" class="specsel"></select></div>
       <div class="selwrap dx" id="dxWrap"><label for="dx" style="position:absolute;left:-9999px">Diagnóza</label><select id="dx" class="specsel dxsel"></select></div>
       <div class="selwrap dx" id="opWrap" hidden><label for="opSel" style="position:absolute;left:-9999px">Operácia</label><select id="opSel" class="specsel dxsel"></select></div>
       <div class="selwrap dx" id="kdWrap" hidden><label for="kdSel" style="position:absolute;left:-9999px">Diagnóza</label><select id="kdSel" class="specsel dxsel"></select></div>
+      <div class="selwrap dx" id="onWrap" hidden><label for="onSel" style="position:absolute;left:-9999px">Diagnóza</label><select id="onSel" class="specsel dxsel"></select></div>
       <div class="pills" role="group" aria-label="Kĺb" id="jointSeg" hidden></div>
       <div class="pills" role="group" aria-label="Rok" id="yearSeg"></div>
     </div>
@@ -525,6 +526,120 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
     </ul>
   </section>
 </div>
+<div id="view-onko" class="view" hidden>
+  <header class="hero">
+    <div>
+      <div class="cap"><span class="dot"></span>NCZI · národný onkologický register a onkologické pracoviská</div>
+      <h1>Onkológia<br><em>na Slovensku.</em></h1>
+      <p class="tag" id="on_tag"></p>
+    </div>
+    <p class="lead">Nové prípady zhubných nádorov podľa diagnóz, krajov, veku a štádia (register 2012–2015). K tomu liečba v ambulanciách klinickej onkológie 2013–2024, náklady na lieky, radiačná onkológia a nukleárna medicína. Vyberte diagnózu hore, potom kliknite na kraj.</p>
+  </header>
+
+  <section class="kpis" id="on_kpis" aria-label="Súhrn onkológie"></section>
+
+  <div class="main">
+    <section class="card mapbox" aria-label="Mapa onkológie">
+      <div class="cardhead"><div><h2 id="on_mapTitle"></h2><p class="note" id="on_mapNote" style="margin:4px 0 0"></p></div></div>
+      <div class="pills" role="group" aria-label="Ukazovateľ" id="on_metric" style="margin-bottom:12px"></div>
+      <div class="maptile"><svg id="on_map" viewBox="-12 -6 748 380" role="img" aria-labelledby="on_mapTitle"></svg></div>
+      <div class="legend" id="on_legend"></div>
+      <div class="tip" id="on_tip" hidden></div>
+    </section>
+    <aside class="card side" id="on_side" aria-live="polite"></aside>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Rebríček <em>krajov</em></h2><p class="note" id="on_rankNote" style="margin:4px 0 0"></p></div></div>
+      <div class="bars" id="on_bars"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Vývoj <em>v čase</em></h2><p class="note" id="on_trendNote" style="margin:4px 0 0"></p></div><div class="legend" id="on_trendLegend" style="margin:4px 0 0"></div></div>
+      <div style="position:relative"><svg id="on_trend" viewBox="0 0 460 260" style="width:100%;height:auto;display:block"></svg><div class="tip" id="on_tip2" hidden></div></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Nové prípady <em>podľa diagnóz</em></h2><p class="note" id="on_dgNote" style="margin:4px 0 0"></p></div></div>
+      <div class="dg" id="on_dg"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Vek a pohlavie <em>pri diagnóze</em></h2><p class="note" id="on_ageNote" style="margin:4px 0 0"></p></div><div class="legend" style="margin:4px 0 0"><span><i style="background:var(--ink)"></i>muži</span><span><i style="background:var(--violet)"></i>ženy</span></div></div>
+      <svg id="on_pyr" class="pyr" viewBox="0 0 460 190" style="width:100%;height:auto;display:block" role="img" aria-label="Veková pyramída nových prípadov"></svg>
+      <div class="agesum" id="on_ageSum"></div>
+      <h3 style="margin:22px 0 8px;font-size:15px">Klinické štádium pri diagnóze</h3>
+      <div id="on_stage"></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Liečba v ambulanciách <em>klinickej onkológie</em></h2><p class="note" id="on_trNote" style="margin:4px 0 0"></p></div><div class="legend" id="on_trLegend" style="margin:4px 0 0"></div></div>
+      <div style="position:relative;margin-bottom:10px"><svg id="on_trTrend" viewBox="0 0 460 200" style="width:100%;height:auto;display:block"></svg><div class="tip" id="on_tip3" hidden></div></div>
+      <div class="dg" id="on_tr"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Náklady <em>na lieky</em></h2><p class="note" id="on_costNote" style="margin:4px 0 0"></p></div><div class="legend" id="on_costLegend" style="margin:4px 0 0"></div></div>
+      <div style="position:relative;margin-bottom:10px"><svg id="on_cost" viewBox="0 0 460 230" style="width:100%;height:auto;display:block"></svg><div class="tip" id="on_tip4" hidden></div></div>
+      <div class="dg" id="on_costRows"></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Radiačná onkológia <em>– prístroje</em></h2><p class="note" id="on_devNote" style="margin:4px 0 0"></p></div><div class="legend" id="on_devLegend" style="margin:4px 0 0"></div></div>
+      <div style="position:relative;margin-bottom:10px"><svg id="on_dev" viewBox="0 0 460 220" style="width:100%;height:auto;display:block"></svg><div class="tip" id="on_tip5" hidden></div></div>
+      <div class="dg" id="on_rpat"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Liečení žiarením <em>podľa diagnóz</em></h2><p class="note" id="on_rdgNote" style="margin:4px 0 0"></p></div></div>
+      <div class="dg" id="on_rdg"></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Nukleárna medicína <em>– PET/CT a liečba</em></h2><p class="note" id="on_nmNote" style="margin:4px 0 0"></p></div></div>
+      <div style="position:relative;margin-bottom:10px"><svg id="on_pet" viewBox="0 0 460 190" style="width:100%;height:auto;display:block"></svg><div class="tip" id="on_tip6" hidden></div></div>
+      <div class="dg" id="on_ther"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Rádionuklidové vyšetrenia <em>in vivo</em></h2><p class="note" id="on_orgNote" style="margin:4px 0 0"></p></div></div>
+      <div class="dg" id="on_org"></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Aktuálny odhad <em>NCZI 2016–2024</em></h2><p class="note" style="margin:4px 0 0">Očakávané prípady z údajov zdravotných poisťovní · správa NCZI, september 2025 · európska štandardná populácia 2013</p></div></div>
+      <div id="on_est"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Pracoviská <em>a personál</em></h2><p class="note" style="margin:4px 0 0">Slovensko · zdravotnícke zariadenia a úväzky lekárov a sestier · ročenky NCZI</p></div></div>
+      <div class="tablebox"><table class="emt" id="on_staff"></table></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="cardhead"><div><h2>Onkologické <em>programy nemocníc</em></h2><p class="note" id="on_progNote" style="margin:4px 0 0"></p></div></div>
+    <div class="tablebox"><table class="emt" id="on_prog"></table></div>
+  </section>
+
+  <section style="padding-inline:4px">
+    <h2 style="margin-bottom:10px">Metodika <em>onkológie</em></h2>
+    <ul class="notes">
+      <li>Incidencia: NCZI, Národný onkologický register SR, Incidencia zhubných nádorov 2012–2015. Ide o posledné spracované ročníky registra. Rok 2015 sa zobrazuje aj pri neskoršom výbere roka. Kraj = bydlisko pacienta. Súčty skupín sú z trojmiestnych kódov MKCH-10. Skupina „spolu“ zahŕňa C00–C96 bez C44 a bez nádorov in situ.</li>
+      <li>Miera na 100 tis. je hrubá (bez vekovej štandardizácie) a používa počet obyvateľov z registra. Úmrtnosť: register, tabuľka úmrtí, iba za celé Slovensko. Veková štruktúra je k dispozícii za roky 2013–2015.</li>
+      <li>Novšie roky: NCZI odhaduje očakávanú incidenciu 2016–2024 algoritmom z údajov poisťovní (správa „Výskyt zhubných nádorov v SR vrátane očakávaných prípadov 1996–2024“). Tieto odhady nie sú porovnateľné s registrom a sú uvedené len v karte Aktuálny odhad.</li>
+      <li>Klinická onkológia: NCZI, dataset C04 (2013–2024). Počty pacientov podľa charakteru liečby, návštevy a vyšetrenia; kraj = sídlo ambulancie. Bratislavský kraj zahŕňa aj Národný onkologický ústav a pacientov z iných krajov. Náklady na lieky boli zisťované len do roku 2023; chemoterapeutické pumpy, cykly a aplikácie len do 2014.</li>
+      <li>Radiačná onkológia: dataset C03 a nukleárna medicína: dataset C01, iba za celé Slovensko. PET/CT vyšetrenia sa od roku 2021 vykazujú v samostatnom module, preto počet vyšetrení in vivo od 2021 klesol. Návratnosť výkazov je 100 %.</li>
+      <li>Pracoviská a personál: ročenky „Činnosť nukleárnej medicíny, klinickej a radiačnej onkológie v SR“ 2019–2024 (tabuľky 1.1, 2.1, 3.1). Ostatné tabuľky ročeniek obsahujú rovnaké údaje ako datasety C01, C03 a C04.</li>
+      <li>Programy nemocníc: MZ SR, Zoznam kategorizovaných nemocníc 2026, najvyššia úroveň programu.</li>
+    </ul>
+  </section>
+</div>
 </div>
 
 <script>
@@ -538,7 +653,7 @@ const TYP = [["nem","Nemocnica","var(--ink)"],["pol","Poliklinika","var(--violet
 const nf = new Intl.NumberFormat("sk-SK");
 const f0 = v => v==null||isNaN(v) ? "–" : nf.format(Math.round(v)), f1 = v => v==null||isNaN(v) ? "–" : v.toLocaleString("sk-SK",{minimumFractionDigits:1,maximumFractionDigits:1});
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}, tab:"main", cy:D.sx.last, op:null, cm:"p", joint:"hip", km:"p", depAll:false, impl:null, kdg:"all", ky:D.kd.years.at(-1), kdm:"f", kh:"Spolu"};
+let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}, tab:"main", cy:D.sx.last, op:null, cm:"p", joint:"hip", km:"p", depAll:false, impl:null, kdg:"all", ky:D.kd.years.at(-1), kdm:"f", kh:"Spolu", og:"all", oy:D.on.ty.at(-1), om:"inc", ot:"chem"};
 const grp = () => D.groups.find(g=>g.id===st.g);
 const ch = () => grp().ch;
 const chName = () => ch()==="ALL" ? "Všetky diagnózy" : D.chn[ch()].replace(/^[IVX]+\.\s*/,"") + (RANGE[ch()]?` (${RANGE[ch()]})`:"");
@@ -580,8 +695,8 @@ const M = {
 };
 const ZMAP={hosp:"zp",alos:"zl",mort:"zm",age:"zp",hchg:"zchg"};
 const resOk = () => !st.d || (st.d.t==="ch" && ch()==="ALL");
-try{ const s=JSON.parse(localStorage.getItem("sietSK2")||"{}"); if(D.groups.some(g=>g.id===s.g)) st.g=s.g; if(M[s.m]) st.m=s.m; if(HY.includes(s.y)) st.y=s.y; if(s.d&&D.dx[s.d.t]?.[s.d.id]) st.d=s.d; if(["chir","klby"].includes(s.tab)) st.tab=s.tab; if(["hip","knee"].includes(s.joint)) st.joint=s.joint; if(["p","n","r"].includes(s.km)) st.km=s.km; if(s.tab==="kardio") st.tab="kardio"; if(D.kd.dg.some(d=>d[0]===s.kdg)) st.kdg=s.kdg; if(D.kd.years.includes(s.ky)) st.ky=s.ky; if(["f","n","v","chg"].includes(s.kdm)) st.kdm=s.kdm; if(D.kd.hosp[s.kh]) st.kh=s.kh; if(D.sx.years.includes(s.cy)) st.cy=s.cy; if(s.op&&(s.op.t==="g"?D.sx.groups:D.sx.ops)[s.op.id]) st.op=s.op; if(["p","n","chg"].includes(s.cm)) st.cm=s.cm; if(!resOk()&&ZMAP[st.m]) st.m=ZMAP[st.m]; }catch(e){}
-const save=()=>{try{localStorage.setItem("sietSK2",JSON.stringify({g:st.g,m:st.m,y:st.y,d:st.d,tab:st.tab,cy:st.cy,op:st.op,cm:st.cm,joint:st.joint,km:st.km,kdg:st.kdg,ky:st.ky,kdm:st.kdm,kh:st.kh}))}catch(e){}};
+try{ const s=JSON.parse(localStorage.getItem("sietSK2")||"{}"); if(D.groups.some(g=>g.id===s.g)) st.g=s.g; if(M[s.m]) st.m=s.m; if(HY.includes(s.y)) st.y=s.y; if(s.d&&D.dx[s.d.t]?.[s.d.id]) st.d=s.d; if(["chir","klby"].includes(s.tab)) st.tab=s.tab; if(["hip","knee"].includes(s.joint)) st.joint=s.joint; if(["p","n","r"].includes(s.km)) st.km=s.km; if(s.tab==="kardio") st.tab="kardio"; if(D.kd.dg.some(d=>d[0]===s.kdg)) st.kdg=s.kdg; if(D.kd.years.includes(s.ky)) st.ky=s.ky; if(["f","n","v","chg"].includes(s.kdm)) st.kdm=s.kdm; if(D.kd.hosp[s.kh]) st.kh=s.kh; if(D.sx.years.includes(s.cy)) st.cy=s.cy; if(s.tab==="onko") st.tab="onko"; if(D.on.dg.some(d=>d[0]===s.og)) st.og=s.og; if(D.on.ty.includes(s.oy)) st.oy=s.oy; if(["inc","chem","bio","onk"].includes(s.om)) st.om=s.om; if(["chem","pal","horm","bio","imu"].includes(s.ot)) st.ot=s.ot; if(s.op&&(s.op.t==="g"?D.sx.groups:D.sx.ops)[s.op.id]) st.op=s.op; if(["p","n","chg"].includes(s.cm)) st.cm=s.cm; if(!resOk()&&ZMAP[st.m]) st.m=ZMAP[st.m]; }catch(e){}
+const save=()=>{try{localStorage.setItem("sietSK2",JSON.stringify({g:st.g,m:st.m,y:st.y,d:st.d,tab:st.tab,cy:st.cy,op:st.op,cm:st.cm,joint:st.joint,km:st.km,kdg:st.kdg,ky:st.ky,kdm:st.kdm,kh:st.kh,og:st.og,oy:st.oy,om:st.om,ot:st.ot}))}catch(e){}};
 const my = () => M[st.m].years ? nearest(M[st.m].years, st.y) : st.y;
 const val = k => M[st.m].get(k, my());
 const srVal = () => M[st.m].srAvg ? M[st.m].srAvg() : M[st.m].get(SR, my());
@@ -1015,11 +1130,11 @@ function renderChirAmb(){
 
 function renderChir(){ renderChirControls(); renderChirKpis(); renderChirMap(); renderChirSide(); renderChirBars(); renderChirTrend(); renderChirOps(); renderChirTech(); renderChirDep(); renderChirJzs(); renderChirEm(); renderChirAmb(); }
 
-const VIEWS={main:{el:"view-main",hash:"",title:"Zdravotná sieť Slovenska"},chir:{el:"view-chir",hash:"#chirurgia",title:"Chirurgia · Zdravotná sieť Slovenska"},klby:{el:"view-klby",hash:"#klby",title:"Kĺbové náhrady · Zdravotná sieť Slovenska"},kardio:{el:"view-kardio",hash:"#kardiologia",title:"Kardiológia · Zdravotná sieť Slovenska"}};
+const VIEWS={main:{el:"view-main",hash:"",title:"Zdravotná sieť Slovenska"},chir:{el:"view-chir",hash:"#chirurgia",title:"Chirurgia · Zdravotná sieť Slovenska"},klby:{el:"view-klby",hash:"#klby",title:"Kĺbové náhrady · Zdravotná sieť Slovenska"},kardio:{el:"view-kardio",hash:"#kardiologia",title:"Kardiológia · Zdravotná sieť Slovenska"},onko:{el:"view-onko",hash:"#onkologia",title:"Onkológia · Zdravotná sieť Slovenska"}};
 function renderTabs(){
   for(const [id,v] of Object.entries(VIEWS)) document.getElementById(v.el).hidden = st.tab!==id;
   document.getElementById("specWrap").hidden=st.tab!=="main"; document.getElementById("dxWrap").hidden=st.tab!=="main";
-  document.getElementById("opWrap").hidden=st.tab!=="chir"; document.getElementById("jointSeg").hidden=st.tab!=="klby"; document.getElementById("kdWrap").hidden=st.tab!=="kardio"; document.getElementById("yearSeg").hidden=st.tab==="klby";
+  document.getElementById("opWrap").hidden=st.tab!=="chir"; document.getElementById("jointSeg").hidden=st.tab!=="klby"; document.getElementById("kdWrap").hidden=st.tab!=="kardio"; document.getElementById("onWrap").hidden=st.tab!=="onko"; document.getElementById("yearSeg").hidden=st.tab==="klby";
   document.querySelectorAll("#tabs button").forEach(b=>{ b.setAttribute("aria-pressed",b.dataset.tab===st.tab); b.onclick=()=>{ if(st.tab===b.dataset.tab) return; st.tab=b.dataset.tab; try{ history.replaceState(null,"",VIEWS[st.tab].hash||location.pathname); }catch(e){} save(); renderAll(); window.scrollTo(0,0); }; });
   document.title = VIEWS[st.tab].title;
 }
@@ -1355,8 +1470,213 @@ function renderKardioProg(){
 
 function renderKardio(){ renderKardioControls(); renderKardioKpis(); renderKardioMap(); renderKardioSide(); renderKardioBars(); renderKardioTrend(); renderKardioDg(); renderKardioAge(); renderKardioHosp(); renderKardioProg(); }
 
+/* ---------- Onkológia ---------- */
+const ON = D.on, OIY = ON.iy, OTY = ON.ty, ODN = Object.fromEntries(ON.dg);
+const oIy = y => nearest(OIY, y);
+const oPop = (k,y) => popOf(k, y < HY[0] ? HY[0] : nearest(HY,y));
+const oIncPop = (k,y) => { const p=ON.pop[y], i=TI(k); return p?p[i*2]+p[i*2+1]:null; };
+const oInc = (k,y,dg=st.og,sx) => { const a=ON.inc[y]?.[dg]; if(!a) return null; const i=TI(k); return sx==null?a[i*2]+a[i*2+1]:a[i*2+sx]; };
+const oTr = (k,y,key) => ON.tr[y]?.[key]?.[TI(k)] ?? null;
+const OTR = [["chem","Chemoterapia"],["pal","Paliatívna liečba"],["horm","Hormonálna liečba"],["bio","Biologická liečba"],["imu","Imunoterapia"]];
+const OTRN = Object.fromEntries(OTR);
+const OCOST = [["cyt","Cytostatiká","var(--ink)"],["bio","Biologická liečba","var(--violet)"],["imu","Imunomodulátory","#bcaaff"],["horm","Hormonálne prípravky","var(--orange)"],["rast","Rastové faktory","var(--lime)"],["antiem","Antiemetiká","#c3c5cc"],["atb","Antibiotiká a antimykotiká","#e4e5e9"]];
+const OM = {
+  inc:{label:"Nové prípady / 100 tis.", long:"Nové prípady na 100 tis. obyvateľov (bydlisko)", title:["Nové prípady","na 100 000 obyvateľov"], fmt:f0, years:OIY, inc:true, get:(k,y)=>{const yy=oIy(y), v=oInc(k,yy); return v==null?null:v/oIncPop(k,yy)*1e5;}},
+  chem:{label:"Chemoterapia / 100 tis.", long:"Pacienti liečení chemoterapiou na 100 tis. obyvateľov (sídlo ambulancie)", title:["Pacienti na chemoterapii","na 100 000 obyvateľov"], fmt:f0, years:OTY, get:(k,y)=>{const v=oTr(k,y,"chem");return v==null?null:v/oPop(k,y)*1e5;}},
+  bio:{label:"Biologická liečba / 100 tis.", long:"Pacienti s biologickou liečbou na 100 tis. obyvateľov (sídlo ambulancie)", title:["Biologická liečba","na 100 000 obyvateľov"], fmt:f0, years:OTY.filter(y=>y>="2015"), get:(k,y)=>{const v=oTr(k,y,"bio");return v==null?null:v/oPop(k,y)*1e5;}},
+  onk:{label:"Vyšetrenia / 1 000 ob.", long:"Vyšetrenia onkologických pacientov v ambulanciách na 1 000 obyvateľov", title:["Vyšetrenia onkologických pacientov","na 1 000 obyvateľov"], fmt:f0, years:OTY, get:(k,y)=>{const v=oTr(k,y,"onk");return v==null?null:v/oPop(k,y)*1000;}}
+};
+const oYear = () => OM[st.om].inc ? oIy(st.oy) : st.oy;
+const oVal = k => OM[st.om].get(k, st.oy);
+function oColor(v, vals){
+  if(v==null) return "var(--mid)";
+  const vv=vals.filter(x=>x!=null), lo=Math.min(...vv), hi=Math.max(...vv), t=hi===lo?0:(v-lo)/(hi-lo);
+  return "var(--v"+Math.min(5,1+Math.floor(t*5))+")";
+}
+const pct = (a,b) => a==null||!b ? "–" : f1(a/b*100)+" %";
+
+function renderOnkoControls(){
+  const sel=document.getElementById("onSel");
+  if(!sel.options.length){ sel.innerHTML=ON.dg.map(([id,n])=>`<option value="${id}">${esc(n)}</option>`).join(""); sel.onchange=()=>{ st.og=sel.value; save(); renderAll(); }; }
+  sel.value=st.og;
+  const ys=document.getElementById("yearSeg"); ys.innerHTML="";
+  for(const y of OTY){ const b=document.createElement("button"); b.type="button"; b.textContent=y; b.setAttribute("aria-pressed",st.oy===y); b.onclick=()=>{st.oy=y;save();renderAll();}; ys.appendChild(b); }
+  document.getElementById("on_metric").innerHTML=Object.entries(OM).map(([id,m])=>`<button type="button" id="onm-${id}" aria-pressed="${st.om===id}">${m.label}</button>`).join("");
+  for(const id of Object.keys(OM)) document.getElementById("onm-"+id).onclick=()=>{st.om=id;save();renderAll();};
+  document.getElementById("on_tag").textContent=ODN[st.og];
+}
+
+function renderOnkoKpis(){
+  const k=st.sel||SR, y=st.oy, iy=oIy(y), where=st.sel?"kraj "+st.sel:"Slovensko";
+  const dl=(a,c,b)=>{ if(a==null||!c) return `<span class="delta flat">${b===null?"–":"základ"}</span>`; const p=(a/c-1)*100; return `<span class="delta ${p>0.5?"up":p<-0.5?"down":"flat"}" title="Zmena oproti ${b}">${p>0?"▲ +":p<0?"▼ ":""}${f1(p)} %</span>`; };
+  const inc=oInc(k,iy), inc0=iy!==OIY[0]?oInc(k,OIY[0]):null, P=oIncPop(k,iy), mo=ON.mort[iy]?.[st.og], mt=mo?mo[0]+mo[1]:null, incSR=oInc(SR,iy);
+  const ch=oTr(k,y,"chem"), ch0=y!=="2015"&&OTY.includes("2015")?oTr(k,"2015","chem"):null, rd=ON.rdg[y]?.[st.og], rdt=rd?rd[0]+rd[1]:null, rd0=ON.rdg["2015"]?.[st.og];
+  const tiles=[
+    ["Nové prípady",f0(inc),dl(inc,inc0,iy!==OIY[0]?OIY[0]:undefined),`<b>${f0(inc/P*1e5)}</b> na 100 tis. ob. · ${iy} · ženy ${pct(oInc(k,iy,st.og,1),inc)}`],
+    ["Úmrtia (SR)",f0(mt),dl(mt,ON.mort[OIY[0]]?.[st.og]?.reduce((a,b)=>a+b,0),iy!==OIY[0]?OIY[0]:undefined),`<b>${incSR?f0(mt/incSR*100):"–"}</b> na 100 nových prípadov · ${iy}`],
+    ["Pacienti na chemoterapii",f0(ch),y==="2015"?`<span class="delta flat">základ</span>`:dl(ch,ch0,"2015"),`<b>${f0(ch/oPop(k,y)*1e5)}</b> na 100 tis. ob. · ${y} · všetky dg.`],
+    ["Liečení žiarením (SR)",f0(rdt),y==="2015"?`<span class="delta flat">základ</span>`:dl(rdt,rd0?rd0[0]+rd0[1]:null,"2015"),`ženy <b>${pct(rd?.[1],rdt)}</b> · diagnóza zistená v ${y}`]
+  ];
+  document.getElementById("on_kpis").innerHTML=`<div class="cap" style="grid-column:1/-1;margin:-2px 0 -4px 4px">${esc(ODN[st.og])} · ${where} · incidencia ${iy}, liečba ${y}${y!=="2015"?" · zmena oproti 2015 (liečba), "+OIY[0]+" (incidencia)":""}</div>`+tiles.map(t=>`<div class="kpi"><div class="row"><span class="cap">${t[0]}</span>${t[2]}</div><div class="v">${t[1]}</div><div class="sub">${t[3]}</div></div>`).join("");
+}
+
+function renderOnkoMap(){
+  const m=OM[st.om], svg=document.getElementById("on_map"), vals=KR.map(oVal), yy=oYear();
+  document.getElementById("on_mapTitle").innerHTML=`${m.title[0]} <em>${m.title[1]}</em><span class="mono" style="font-size:13px;color:var(--muted);margin-left:8px">${yy}</span>`;
+  document.getElementById("on_mapNote").textContent=m.inc?`${ODN[st.og]} · bydlisko pacienta · register${yy!==st.oy?" · posledný rok registra "+yy:""}`:"Všetky diagnózy · podľa sídla ambulancie · Bratislava vrátane NOÚ";
+  let h="";
+  for(const k of KR) h+=`<path class="region" data-k="${k}" tabindex="0" role="button" aria-label="${k} kraj: ${m.fmt(oVal(k))}" d="${D.shapes[k].d}" style="fill:${oColor(oVal(k),vals)}"></path>`;
+  if(st.sel) h+=`<path d="${D.shapes[st.sel].d}" style="fill:none;stroke:var(--ink);stroke-width:3;pointer-events:none;stroke-linejoin:round"></path>`;
+  for(const k of KR){ const s=D.shapes[k], v=oVal(k), ink=inkOn(oColor(v,vals)), dx=k==="Bratislavský"?-4:0, dy=k==="Bratislavský"?18:0;
+    if(st.sel===k) h+=`<circle cx="${s.cx+dx}" cy="${s.cy+dy-30}" r="7" style="fill:var(--lime);stroke:var(--ink);stroke-width:1.5"/>`;
+    h+=`<text class="lbl" x="${s.cx+dx}" y="${s.cy+dy-4}" style="fill:${ink}">${AB[k]}</text><text class="lblv" x="${s.cx+dx}" y="${s.cy+dy+13}" style="fill:${ink}">${m.fmt(v)}</text>`; }
+  svg.innerHTML=h;
+  const tip=document.getElementById("on_tip"), box=svg.closest(".mapbox");
+  svg.querySelectorAll(".region").forEach(p=>{ const k=p.dataset.k; clickable(p,()=>select(k));
+    p.onmousemove=e=>tipAt(tip,box,e,`<div style="font-weight:600;margin-bottom:2px">${k} kraj</div>${m.long}: <b>${m.fmt(oVal(k))}</b><br>Slovensko: <span class="mono">${m.fmt(m.get(SR,st.oy))}</span><br>${m.inc?`Nové prípady: <span class="mono">${f0(oInc(k,yy))}</span>`:`Pacienti na chemoterapii: <span class="mono">${f0(oTr(k,st.oy,"chem"))}</span>`}`);
+    p.onmouseleave=()=>tip.hidden=true; });
+  const vv=vals.filter(x=>x!=null), lo=Math.min(...vv), hi=Math.max(...vv), s=(hi-lo)/5;
+  document.getElementById("on_legend").innerHTML=[1,2,3,4,5].map(i=>`<span><i style="background:var(--v${i})"></i>${m.fmt(lo+s*(i-1))}–${m.fmt(lo+s*i)}</span>`).join("");
+}
+
+function renderOnkoSide(){
+  const k=st.sel||SR, isSR=k===SR, y=st.oy, iy=oIy(y), P=oIncPop(k,iy), Ps=oIncPop(SR,iy), Q=oPop(k,y), Qs=oPop(SR,y);
+  const rows=[["sect",`${esc(ODN[st.og])} · register ${iy}`],["Nové prípady",f0(oInc(k,iy)),f0(oInc(SR,iy))],["Na 100 tis. obyvateľov",f0(oInc(k,iy)/P*1e5),f0(oInc(SR,iy)/Ps*1e5)],["Muži",f0(oInc(k,iy,st.og,0)),f0(oInc(SR,iy,st.og,0))],["Ženy",f0(oInc(k,iy,st.og,1)),f0(oInc(SR,iy,st.og,1))]];
+  rows.push(["sect",`Klinická onkológia · ${y} · všetky dg.`],["Návštevy ambulancií",f0(oTr(k,y,"vis")),f0(oTr(SR,y,"vis"))],["Vyšetrenia na 1 000 ob.",f0(oTr(k,y,"onk")/Q*1000),f0(oTr(SR,y,"onk")/Qs*1000)]);
+  for(const [id,n] of OTR) rows.push([n,f0(oTr(k,y,id)),f0(oTr(SR,y,id))]);
+  const cy=nearest(Object.keys(ON.cost),y), ct=OCOST.reduce((s,[id])=>s+(ON.cost[cy]?.[id]?.[TI(k)]||0),0), cs=OCOST.reduce((s,[id])=>s+(ON.cost[cy]?.[id]?.[0]||0),0);
+  rows.push(["sect",`Náklady na lieky · ${cy}`],["Spolu (mil. €)",f1(ct/1e6),f1(cs/1e6)],["Na pacienta na chemo. (€)",f0(ct/oTr(k,cy,"chem")),f0(cs/oTr(SR,cy,"chem"))]);
+  const el=document.getElementById("on_side");
+  el.innerHTML=`<div class="who"><span class="badge">${isSR?"SK":AB[k]}</span><div><div class="cap">${isSR?"Celé Slovensko":"Vybraný kraj"}</div><h2 style="font-size:24px">${isSR?"Slovenská <em>republika</em>":esc(k)+" <em>kraj</em>"}</h2></div></div>
+   <div class="kv"><span class="h"></span><span class="h" style="text-align:right">${isSR?"":"Kraj"}</span><span class="h" style="text-align:right">SR</span>
+   ${rows.map(r=>r[0]==="sect"?`<span class="sect">${r[1]}</span>`:`<span>${r[0]}</span><span class="val">${isSR?"":r[1]}</span><span class="sr">${r[2]}</span>`).join("")}</div>
+   ${isSR?`<p class="note" style="margin:0">Kliknite na kraj pre detail.</p>`:`<button class="linkbtn" id="on_back">Späť na celé Slovensko</button>`}`;
+  document.getElementById("on_back")?.addEventListener("click",()=>select(null));
+}
+
+function renderOnkoBars(){
+  const m=OM[st.om], rows=KR.map(k=>({k,v:oVal(k)})).sort((a,b)=>(b.v??-1e9)-(a.v??-1e9)), avg=m.get(SR,st.oy);
+  document.getElementById("on_rankNote").innerHTML=`${m.long} · ${oYear()} · čiarkovane Slovensko <span class="mono">${m.fmt(avg)}</span>`;
+  const vs=rows.map(r=>r.v??0), hi=Math.max(...vs,avg??0,1e-9), pc=v=>v/hi*100, box=document.getElementById("on_bars");
+  box.innerHTML=rows.map(r=>`<div class="bar${st.sel===r.k?" sel":""}" data-k="${r.k}" role="button" tabindex="0"><span>${r.k}</span>
+    <span class="track"><span class="fill" style="left:0;width:${Math.max(1.5,pc(r.v??0))}%"></span>${avg!=null?`<span class="avg" style="left:${pc(avg)}%"></span>`:""}</span>
+    <span class="v">${m.fmt(r.v)}</span></div>`).join("");
+  box.querySelectorAll(".bar").forEach(b=>clickable(b,()=>select(b.dataset.k)));
+}
+
+function renderOnkoTrend(){
+  const m=OM[st.om], cmp=st.sel||KR.slice().sort((a,b)=>(oVal(b)??0)-(oVal(a)??0))[0];
+  document.getElementById("on_trendNote").textContent=`${m.long}${m.inc?" · "+ODN[st.og]:""}`;
+  const series=[{name:"Slovensko",color:"#85878f",dash:"4 4",vals:y=>m.get(SR,y)},{name:cmp+" kraj",color:"var(--violet)",area:true,vals:y=>m.get(cmp,y)}];
+  document.getElementById("on_trendLegend").innerHTML=series.map(s=>`<span><i style="background:${s.color};height:4px;width:16px"></i>${s.name}</span>`).join("");
+  lineChart("on_trend","on_tip2",m.years,series,m.fmt,{sel:oYear(),onPick:m.inc?null:y=>{st.oy=y;save();renderAll();}});
+}
+
+function renderOnkoDg(){
+  const k=st.sel||SR, iy=oIy(st.oy), P=oIncPop(k,iy);
+  document.getElementById("on_dgNote").textContent=`${st.sel?"Kraj "+st.sel:"Slovensko"} · register ${iy} · kliknutím vyberiete`;
+  const rows=ON.dg.filter(([id])=>id!=="all").map(([id,n])=>{ const v=oInc(k,iy,id)||0, mo=ON.mort[iy]?.[id]; return {id,n,v,meta:`${f1(v/P*1e5)} na 100 tis. · muži ${f0(oInc(k,iy,id,0))} · ženy ${f0(oInc(k,iy,id,1))}${mo?` · úmrtia SR ${f0(mo[0]+mo[1])}`:""}`}; }).sort((a,b)=>b.v-a.v);
+  dgRows(document.getElementById("on_dg"), rows, r=>{ st.og=st.og===r.id?"all":r.id; save(); renderAll(); }, r=>st.og===r.id);
+}
+
+function renderOnkoAge(){
+  const ay=Object.keys(ON.age), y=nearest(ay,oIy(st.oy)), a=ON.age[y]?.[st.og], svg=document.getElementById("on_pyr");
+  const B=[[0,4,"0–19"],[4,8,"20–39"],[8,10,"40–49"],[10,12,"50–59"],[12,14,"60–69"],[14,16,"70–79"],[16,18,"80+"]];
+  document.getElementById("on_ageNote").textContent=`${ODN[st.og]} · Slovensko · ${y} · veková štruktúra je len za celé Slovensko`;
+  if(!a){ svg.innerHTML=""; document.getElementById("on_ageSum").innerHTML=""; }
+  else {
+    const sum=(o,b)=>a.slice(o+b[0],o+b[1]).reduce((s,v)=>s+v,0), g=[...B.map(b=>sum(0,b)),...B.map(b=>sum(18,b))], n=B.length, rowH=26, T=6, cx=230, gap=26, mx=Math.max(1,...g), half=cx-gap-50, sc=v=>v/mx*half;
+    let h=""; for(let j=0;j<n;j++){ const r=n-1-j, yy=T+j*rowH, m=g[r], w=g[r+n];
+      h+=`<rect x="${cx-gap-sc(m)}" y="${yy}" width="${sc(m)}" height="${rowH-7}" rx="4" style="fill:var(--ink)"><title>Muži ${B[r][2]}: ${f0(m)}</title></rect><rect x="${cx+gap}" y="${yy}" width="${sc(w)}" height="${rowH-7}" rx="4" style="fill:var(--violet)"><title>Ženy ${B[r][2]}: ${f0(w)}</title></rect>`;
+      h+=`<text x="${cx}" y="${yy+rowH/2+1}" style="fill:var(--ink2);text-anchor:middle">${B[r][2]}</text><text x="${cx-gap-sc(m)-6}" y="${yy+rowH/2+1}" style="fill:var(--muted);text-anchor:end">${f0(m)}</text><text x="${cx+gap+sc(w)+6}" y="${yy+rowH/2+1}" style="fill:var(--muted)">${f0(w)}</text>`; }
+    svg.setAttribute("viewBox",`0 0 460 ${T+n*rowH}`); svg.innerHTML=h;
+    const tot=g.reduce((s,v)=>s+v,0), u50=g[0]+g[1]+g[2]+g[n]+g[n+1]+g[n+2], o70=g[5]+g[6]+g[n+5]+g[n+6];
+    document.getElementById("on_ageSum").innerHTML=`<span>Spolu <b>${f0(tot)}</b></span><span>Do 50 rokov <b>${pct(u50,tot)}</b></span><span>70 a viac <b>${pct(o70,tot)}</b></span>`;
+  }
+  const sy=oIy(st.oy), s=ON.stage[sy]?.[st.og], SC=[["I","#ddd4ff"],["II","#bcaaff"],["III","#7a5bff"],["IV","#4a2bc2"],["neznáme","#c3c5cc"]];
+  const bar=(lbl,v)=>{ const t=v.reduce((a,b)=>a+b,0); if(!t) return ""; return `<div style="display:grid;grid-template-columns:52px 1fr 64px;gap:10px;align-items:center;margin-bottom:8px"><span style="font-size:13px">${lbl}</span><span style="display:flex;height:22px;border-radius:8px;overflow:hidden">${v.map((x,i)=>x?`<span title="Štádium ${SC[i][0]}: ${f0(x)} (${f0(x/t*100)} %)" style="width:${x/t*100}%;background:${SC[i][1]};color:${i>=2?"#fff":"var(--ink)"};font:11px var(--mono);display:flex;align-items:center;justify-content:center;overflow:hidden">${x/t>.07?f0(x/t*100)+"%":""}</span>`:"").join("")}</span><span class="mono" style="font-size:12px;color:var(--muted);text-align:right">${f0(t)}</span></div>`; };
+  document.getElementById("on_stage").innerHTML=s?bar("Muži",s.slice(0,5))+bar("Ženy",s.slice(5))+`<div class="legend" style="margin-top:4px">${SC.map(([n,c])=>`<span><i style="background:${c}"></i>${n==="neznáme"?n:"štádium "+n}</span>`).join("")}</div><p class="note" style="margin:6px 0 0">Slovensko · ${sy} · hodnotené prípady; skorý záchyt (I–II) vs. pokročilé štádium (III–IV)</p>`:`<p class="note">Za túto diagnózu nie sú údaje o štádiu.</p>`;
+}
+
+function renderOnkoTreat(){
+  const k=st.sel||SR, y=st.oy, key=OTRN[st.ot]?st.ot:"chem";
+  document.getElementById("on_trNote").textContent=`${st.sel?"Kraj "+st.sel:"Slovensko"} · pacienti podľa charakteru liečby · všetky diagnózy · kliknutím zobrazíte vývoj`;
+  const ys=OTY.filter(yy=>oTr(SR,yy,key)!=null), series=[{name:"Slovensko",color:"#85878f",dash:"4 4",vals:yy=>oTr(SR,yy,key)}];
+  if(st.sel) series.push({name:st.sel+" kraj",color:"var(--violet)",area:true,vals:yy=>oTr(k,yy,key)}); else series[0]={name:"Slovensko",color:"var(--violet)",area:true,vals:yy=>oTr(SR,yy,key)};
+  document.getElementById("on_trLegend").innerHTML=`<span><i style="background:var(--violet);height:4px;width:16px"></i>${OTRN[key]}</span>`;
+  lineChart("on_trTrend","on_tip3",ys,series,f0,{sel:y,onPick:yy=>{st.oy=yy;save();renderAll();}});
+  const rows=OTR.map(([id,n])=>{ const v=oTr(k,y,id), v0=oTr(k,"2015",id); return {id,n,v:v||0,meta:`${f0((v||0)/oPop(k,y)*1e5)} na 100 tis. ob.${v0&&y!=="2015"?` · 2015→${y}: ${v>=v0?"+":""}${f0((v/v0-1)*100)} %`:""}`}; });
+  dgRows(document.getElementById("on_tr"), rows, r=>{ st.ot=r.id; save(); renderOnkoTreat(); }, r=>key===r.id);
+}
+
+function renderOnkoCost(){
+  const k=st.sel||SR, i=TI(k), ys=Object.keys(ON.cost).sort(), cy=nearest(ys,st.oy);
+  document.getElementById("on_costNote").textContent=`${st.sel?"Kraj "+st.sel:"Slovensko"} · tis. € · ambulancie klinickej onkológie · zisťované do ${ys.at(-1)}`;
+  const series=OCOST.slice().reverse().map(([id,n,c])=>({n,c,v:y=>(ON.cost[y]?.[id]?.[i]||0)/1000}));
+  document.getElementById("on_costLegend").innerHTML=OCOST.slice(0,5).map(([,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("");
+  stackCols("on_cost","on_tip4",ys,series);
+  const tot=OCOST.reduce((s,[id])=>s+(ON.cost[cy]?.[id]?.[i]||0),0);
+  dgRows(document.getElementById("on_costRows"), OCOST.map(([id,n])=>{ const v=ON.cost[cy]?.[id]?.[i]||0, v0=ON.cost["2015"]?.[id]?.[i]; return {n:`${n} (tis. €)`,v:v/1000,meta:`${pct(v,tot)} nákladov ${cy}${v0&&cy!=="2015"?` · 2015→${cy}: ${v>=v0?"+":""}${f0((v/v0-1)*100)} %`:""}`}; }).filter(r=>r.v>0).sort((a,b)=>b.v-a.v));
+}
+
+function renderOnkoRadio(){
+  const ys=ON.ry, y=nearest(ys,st.oy);
+  const DC=[["Lineárne urýchľovače s volumetrickým zobrazením","var(--violet)"],["Lineárne urýchľovače so stereotaxiou","var(--lime)"],["Lineárne urýchľovače s portálovým zobrazením","#bcaaff"],["Lineárne urýchľovače bez zobrazenia","#ddd4ff"],["Kobaltové ožarovače (Co60)","var(--orange)"],["RTG terapeutické prístroje","#c3c5cc"]];
+  const lin=yy=>DC.slice(0,4).reduce((s,[n])=>s+ON.dev[yy][n],0);
+  document.getElementById("on_devNote").textContent=`Slovensko · ožarovacie prístroje k 31. 12. · lineárne urýchľovače ${f0(lin(ys[0]))} (${ys[0]}) → ${f0(lin(y))} (${y})`;
+  document.getElementById("on_devLegend").innerHTML=DC.map(([n,c])=>`<span><i style="background:${c}"></i>${n.replace("Lineárne urýchľovače","LU")}</span>`).join("");
+  stackCols("on_dev","on_tip5",ys,DC.slice().reverse().map(([n,c])=>({n,c,v:yy=>ON.dev[yy][n]})));
+  const P=ON.rpat[y], P0=ON.rpat[ys[0]], V=ON.vyk[y];
+  dgRows(document.getElementById("on_rpat"), [...Object.entries(P).filter(([,v])=>v>0).map(([n,v])=>({n:`Pacienti: ${n.toLowerCase()}`,v,meta:`${y}${P0[n]?` · ${ys[0]}→${y}: ${v>=P0[n]?"+":""}${f0((v/P0[n]-1)*100)} %`:""}`})),
+    {n:"Protinádorové výkony na lineárnych urýchľovačoch",v:V["Lineárne urýchľovače"],meta:`${y} · spolu protinádorové výkony ${f0(Object.values(V).reduce((a,b)=>a+b,0))} · ožarovacie plány ${f0(ON.rvis[y].plan)}`}]);
+  const R=ON.rdg[y]||{}, tot=R.tot?R.tot[0]+R.tot[1]:0;
+  document.getElementById("on_rdgNote").textContent=`Slovensko · pacienti liečení žiarením podľa diagnózy zistenej v roku ${y} · spolu ${f0(tot)} · kliknutím vyberiete diagnózu`;
+  const rows=ON.dg.filter(([id])=>id!=="all"&&R[id]).map(([id,n])=>({id,n,v:R[id][0]+R[id][1],meta:`muži ${f0(R[id][0])} · ženy ${f0(R[id][1])} · ${pct(R[id][0]+R[id][1],tot)}`})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v);
+  dgRows(document.getElementById("on_rdg"), rows, r=>{ st.og=st.og===r.id?"all":r.id; save(); renderAll(); }, r=>st.og===r.id);
+}
+
+function renderOnkoNm(){
+  const py=Object.keys(ON.pet).sort(), y=nearest(Object.keys(ON.ther).sort(),st.oy), N=ON.nvis[y];
+  document.getElementById("on_nmNote").textContent=`Slovensko · PET/CT vyšetrenia ${py[0]}–${py.at(-1)} · pod grafom terapeutické aplikácie rádiofarmák ${y} · návštevy ${f0(N.vis)}`;
+  lineChart("on_pet","on_tip6",py,[{name:"PET/CT vyšetrenia",color:"var(--violet)",area:true,vals:yy=>ON.pet[yy]}],f0,{sel:nearest(py,st.oy)});
+  const T=ON.ther[y], T0=ON.ther[OTY[0]]||{};
+  dgRows(document.getElementById("on_ther"), Object.entries(T).filter(([,v])=>v>0).map(([n,v])=>({n,v,meta:T0[n]>=20&&y!==OTY[0]?`${OTY[0]}→${y}: ${v>=T0[n]?"+":""}${f0((v/T0[n]-1)*100)} %`:""})).sort((a,b)=>b.v-a.v));
+  const O=ON.organ[y]||{}, tot=Object.values(O).reduce((a,b)=>a+b,0), O0=ON.organ["2019"]||{};
+  document.getElementById("on_orgNote").textContent=`Slovensko · ${y} · spolu ${f0(tot)} vyšetrení · PET/CT od 2021 v samostatnom module`;
+  dgRows(document.getElementById("on_org"), Object.entries(O).map(([n,v])=>({n,v,meta:`${pct(v,tot)}${O0[n]&&y!=="2019"?` · 2019: ${f0(O0[n])}`:""}`})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v));
+}
+
+function renderOnkoEst(){
+  const facts=[["Incidencia 2024","719,2","na 100 tis. (štandard.), C00–C96 · 1996: 582,3"],["Úmrtnosť 2024","258,1","na 100 tis. (štandard.) · o 77,5 menej ako 1996"],["Prežívanie 1 rok","81 %","diagnóza 2023 · 2016: 79 %"],["Prežívanie 5 rokov","58–59 %","diagnóza 2016–2019 · Bratislavský kraj 64 %"]];
+  const dg=[["Prostata (muži)","165,4","2024 · 1996: 74,4"],["Prsník (ženy)","123,0","2024 · 1996: 80,9"],["Hrubé črevo a konečník","73,1","2024 · 2016: 86,3 · pokles po skríningu"],["Krčok maternice","16,5","2024 · 2016: 20,7 · in situ D06 14,2 → 55,0"]];
+  const surv=[["Semenník, štítna žľaza","91 %"],["Prsník","75 %"],["Telo maternice","73 %"],["Žlčník a žlčové cesty","13 %"],["Pečeň","10 %"],["Pankreas","9 %"]];
+  const tile=t=>`<div class="kpi" style="padding:14px"><div class="cap">${t[0]}</div><div class="v" style="font-size:26px">${t[1]}</div><div class="sub">${t[2]}</div></div>`;
+  document.getElementById("on_est").innerHTML=`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px">${facts.map(tile).join("")}</div>
+    <h3 style="margin:0 0 8px;font-size:15px">Očakávaná incidencia na 100 tis. (štandard.)</h3>
+    <div class="kv" style="grid-template-columns:1fr auto">${dg.map(r=>`<span>${r[0]}<span style="display:block;color:var(--muted);font:11px var(--mono)">${r[2]}</span></span><span class="val">${r[1]}</span>`).join("")}</div>
+    <h3 style="margin:16px 0 8px;font-size:15px">Prežívanie 5 rokov podľa diagnózy (2016–2019)</h3>
+    <div class="agesum">${surv.map(r=>`<span>${r[0]} <b>${r[1]}</b></span>`).join("")}</div>`;
+}
+
+function renderOnkoStaff(){
+  const ys=Object.keys(ON.staff).sort(), G=[["ko","Klinická onkológia"],["ro","Radiačná onkológia"],["nm","Nukleárna medicína"]];
+  document.getElementById("on_staff").innerHTML=`<thead><tr><th style="cursor:default">Odbor</th><th style="cursor:default">Ukazovateľ</th>${ys.map(y=>`<th style="cursor:default;text-align:right">${y}</th>`).join("")}</tr></thead><tbody>`+
+    G.map(([id,n])=>[["Zariadenia",0,f0],["Lekári (úväzky)",1,f1],["Sestry (úväzky)",2,f1]].map(([l,j,fm],r)=>`<tr>${r===0?`<td rowspan="3" style="vertical-align:top;font-weight:600">${n}</td>`:""}<td>${l}</td>${ys.map(y=>`<td class="c" style="text-align:right;font-family:var(--mono)">${fm(ON.staff[y][id][j])}</td>`).join("")}</tr>`).join("")).join("")+`</tbody>`;
+}
+
+function renderOnkoProg(){
+  const k=st.sel, g=D.groups.find(x=>x.id==="onko"), rows=D.hosp.filter(h=>(!k||h.k===k)&&g.progs.some(p=>h.p[p[0]]));
+  const score=h=>g.progs.reduce((s,p)=>s+(h.p[p[0]]||0),0); rows.sort((a,b)=>score(b)-score(a)||a.n.localeCompare(b.n,"sk"));
+  document.getElementById("on_progNote").textContent=`${k?"Kraj "+k:"Slovensko"} · ${rows.length} nemocníc s onkologickým programom · kategorizácia 2026`;
+  const cell=v=>v?`<span class="chip${v>=4?" hi":""}">${RNk[v]}</span>`:`<span class="dash">—</span>`;
+  document.getElementById("on_prog").innerHTML=`<thead><tr><th style="cursor:default">Nemocnica</th><th style="cursor:default">Kraj</th>${g.progs.map(p=>`<th style="cursor:default;text-align:center" title="${esc(p[2])}">${esc(p[1])}</th>`).join("")}</tr></thead><tbody>`+
+    rows.slice(0,k?60:30).map(h=>`<tr><td>${esc(h.n)}</td><td style="color:var(--muted)">${esc(h.k)}</td>${g.progs.map(p=>`<td class="c">${cell(h.p[p[0]])}</td>`).join("")}</tr>`).join("")+`</tbody>`;
+}
+
+function renderOnko(){ renderOnkoControls(); renderOnkoKpis(); renderOnkoMap(); renderOnkoSide(); renderOnkoBars(); renderOnkoTrend(); renderOnkoDg(); renderOnkoAge(); renderOnkoTreat(); renderOnkoCost(); renderOnkoRadio(); renderOnkoNm(); renderOnkoEst(); renderOnkoStaff(); renderOnkoProg(); }
+
 function select(k){ st.sel = st.sel===k ? null : k; renderAll(); }
-function renderAll(){ renderTabs(); if(st.tab==="chir"){ renderChir(); return; } if(st.tab==="klby"){ renderKlby(); return; } if(st.tab==="kardio"){ renderKardio(); return; } renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
-try{ if(location.hash==="#chirurgia") st.tab="chir"; if(location.hash==="#klby") st.tab="klby"; if(location.hash==="#kardiologia") st.tab="kardio"; }catch(e){}
+function renderAll(){ renderTabs(); if(st.tab==="chir"){ renderChir(); return; } if(st.tab==="klby"){ renderKlby(); return; } if(st.tab==="kardio"){ renderKardio(); return; } if(st.tab==="onko"){ renderOnko(); return; } renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
+try{ if(location.hash==="#chirurgia") st.tab="chir"; if(location.hash==="#klby") st.tab="klby"; if(location.hash==="#kardiologia") st.tab="kardio"; if(location.hash==="#onkologia") st.tab="onko"; }catch(e){}
 renderAll();
 </script>
