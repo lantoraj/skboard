@@ -734,7 +734,7 @@ function renderControls(){
 
 function setDx(d){ st.d=d; if(!resOk()&&ZMAP[st.m]) st.m=ZMAP[st.m]; save(); renderAll(); }
 function delta(a,b,goodDown,base){ if(a==null||!b) return `<span class="delta flat">–</span>`; const d=(a/b-1)*100; if(Math.abs(d)<0.5) return `<span class="delta flat">±0 % vs ${base}</span>`;
-  const good = goodDown ? d<0 : d>0; return `<span class="delta ${good?"up":"down"}">${d>0?"▲ +":"▼ "}${f1(d)} %</span>`; }
+  return `<span class="delta ${d>0?"up":"down"}">${d>0?"▲ +":"▼ "}${f1(d)} %</span>`; }
 function renderKpis(){
   const k=st.sel||SR, yh=nearest(HY,st.y), ya=nearest(AY,st.y), s=S(k,ya), s0=S(k,AY[0]);
   const u=UZ(k,yh)||[0,0,0], u0=UZ(k,HY[0])||[0,0,0], al=u[0]?u[1]/u[0]:null, al0=u0[0]?u0[1]/u0[0]:null, mo=u[0]?u[2]/u[0]*1000:null, mo0=u0[0]?u0[2]/u0[0]*1000:null;
