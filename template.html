@@ -405,6 +405,18 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
 
   <div class="two">
     <section class="card">
+      <div class="cardhead"><div><h2>Najpoužívanejšie <em>implantáty</em></h2><p class="note" id="k_implNote" style="margin:4px 0 0"></p></div></div>
+      <div class="pills" role="group" aria-label="Typ komponentu" id="k_implSeg" style="margin-bottom:12px"></div>
+      <div class="dg" id="k_impl"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Výrobcovia</h2><p class="note" id="k_mfNote" style="margin:4px 0 0"></p></div></div>
+      <div class="dg" id="k_mf"></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
       <div class="cardhead"><div><h2>Spôsob <em>fixácie</em></h2><p class="note" id="k_fixNote" style="margin:4px 0 0"></p></div><div class="legend" id="k_fixLegend" style="margin:4px 0 0"></div></div>
       <div style="position:relative"><svg id="k_fix" viewBox="0 0 460 240" style="width:100%;height:auto;display:block"></svg><div class="tip" id="k_tip3" hidden></div></div>
       <div class="tablebox" style="margin-top:12px"><table class="emt" id="k_rr"></table></div>
@@ -433,12 +445,12 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
   <section style="padding-inline:4px">
     <h2 style="margin-bottom:10px">Metodika <em>kĺbových náhrad</em></h2>
     <ul class="notes">
-      <li>Zdroj: Slovenský artroplastický register (SAR, správca UN Martin), výročná správa 2023. Bedrový kĺb od roku 2003, kolenný od roku 2006. Údaje sú prevzaté z tabuliek správy (PDF) a súčty pracovísk sú overené proti celkovým počtom registra.</li>
+      <li>Zdroj: Slovenský artroplastický register (SAR, správca UN Martin), výročné správy 2024 a 2023. Bedrový kĺb od roku 2003, kolenný od roku 2006. Údaje sú prevzaté z tabuliek správ a súčty pracovísk sú overené proti celkovým počtom registra. Pri pracoviskách je pre porovnanie uvedený aj rok 2023.</li>
       <li>Pracoviská a kraje: počty podľa pracoviska za rok 2023; kraj = sídlo pracoviska. Prepočet na obyvateľov kraja je preto len orientačný, pacienti môžu cestovať do iných krajov.</li>
       <li>Úroveň ortopedického programu pri pracovisku pochádza zo Zoznamu kategorizovaných nemocníc 2026 (MZ SR).</li>
       <li>Revidovanosť (RR) = podiel implantátov, ktoré boli revidované, za celé obdobie registra; stredná doba prežívania v rokoch.</li>
-      <li>Výrobcov implantátov register vo výročnej správe uvádza len ako počty modelov komponentov v databáze, nie ako počty implantácií; trhové podiely výrobcov preto nie sú dostupné. Kostné cementy sú uvedené podľa počtu použití.</li>
-      <li>Výročnú správu za rok 2024 doplníme, keď bude k dispozícii.</li>
+      <li>Implantáty a výrobcovia: 10 najpoužívanejších modelov v každej kategórii podľa správy 2024, počty sú kumulatívne za celé obdobie registra (od 2003, resp. 2006), nie za jeden rok. Podiel výrobcu je súčet jeho modelov v top 10; ostatné implantáty správa po výrobcoch neuvádza. Kostné cementy sú uvedené podľa počtu použití v danom roku.</li>
+      <li>Spôsob fixácie v správe 2024 nemusí v súčte presne zodpovedať počtu primárnych náhrad; zobrazujeme podiely.</li>
     </ul>
   </section>
 </div>
@@ -526,7 +538,7 @@ const TYP = [["nem","Nemocnica","var(--ink)"],["pol","Poliklinika","var(--violet
 const nf = new Intl.NumberFormat("sk-SK");
 const f0 = v => v==null||isNaN(v) ? "–" : nf.format(Math.round(v)), f1 = v => v==null||isNaN(v) ? "–" : v.toLocaleString("sk-SK",{minimumFractionDigits:1,maximumFractionDigits:1});
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}, tab:"main", cy:D.sx.last, op:null, cm:"p", joint:"hip", km:"p", depAll:false, kdg:"all", ky:D.kd.years.at(-1), kdm:"f", kh:"Spolu"};
+let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}, tab:"main", cy:D.sx.last, op:null, cm:"p", joint:"hip", km:"p", depAll:false, impl:null, kdg:"all", ky:D.kd.years.at(-1), kdm:"f", kh:"Spolu"};
 const grp = () => D.groups.find(g=>g.id===st.g);
 const ch = () => grp().ch;
 const chName = () => ch()==="ALL" ? "Všetky diagnózy" : D.chn[ch()].replace(/^[IVX]+\.\s*/,"") + (RANGE[ch()]?` (${RANGE[ch()]})`:"");
@@ -1017,8 +1029,8 @@ const AR = D.ar, KY = AR.year;
 const KL = {
   fix:{"Cemented":"cementovaná","Uncemented":"necementovaná","Hybrids":"hybridná","Reverse hybr.":"reverzne hybridná","Reverse hybrids":"reverzne hybridná"},
   age:{"[0,55]":"do 55 rokov","(55,65]":"56–65 rokov","(65,75]":"66–75 rokov","(75,max]":"nad 75 rokov","Not ident.":"neuvedený"},
-  diag:{"Primary OA":"Primárna artróza","Dysplastic OA":"Dysplastická artróza","Posttraumatic OA":"Poúrazová artróza","AVN":"Avaskulárna nekróza","M.Perthes":"M. Perthes","RA":"Reumatoidná artritída","Fracture":"Zlomenina","Other causes":"Iné príčiny","Not ident.":"Neuvedené","Primary monocond.OA":"Primárna artróza – jeden kondyl","Primary bicond.OA":"Primárna artróza – oba kondyly","Unspecified":"Neuvedené"},
-  reas:{"Paraarticular Osifications":"Paraartikulárne osifikácie","Luxation":"Luxácia","Polyethylene Wear":"Opotrebenie polyetylénu","Early Infection":"Včasná infekcia","Chronic Infection":"Chronická infekcia","Acetabulary Protrusis":"Protrúzia acetabula","Aseptic Loos. of Both Comp.":"Aseptické uvoľnenie oboch komponentov","Aseptic Loos. of Acet. Comp.":"Aseptické uvoľnenie jamky","Aseptic Loos. of Fem. Comp.":"Aseptické uvoľnenie drieku","Osteolysis of Acetabulum":"Osteolýza acetabula","Osteolysis of Femur":"Osteolýza femuru","Big Bone Defect of Acetabulum":"Veľký kostný defekt acetabula","Big Bone Defect of Femur":"Veľký kostný defekt femuru","Periprosthesis Fracture":"Periprotetická zlomenina","Fracture of Implant":"Zlomenina implantátu","Spacer to THA":"Spacer na TEP","Girdlestone to THA":"Girdlestone na TEP","Other":"Iné","Aseptic Loosening of Femoral Comp.":"Aseptické uvoľnenie femorálneho komponentu","Aseptic Loosening of Tibial Comp.":"Aseptické uvoľnenie tibiálneho komponentu","Aseptic Loosening of Patellar Comp.":"Aseptické uvoľnenie patelárneho komponentu","Patellar nectrosis":"Nekróza pately","Patellar Luxation":"Luxácia pately","Patellar Pain":"Bolesť pately","Colateral Ligaments Instability":"Instabilita kolaterálnych väzov","Instability of PCL":"Instabilita zadného skríženého väzu","Stifness":"Stuhnutosť","Malposition":"Malpozícia","Knee Pain Without Loosening":"Bolesť kolena bez uvoľnenia","Spacer to TKA":"Spacer na TEP","Other causes":"Iné príčiny"}
+  diag:{"Primary OA":"Primárna artróza","Dysplastic OA":"Dysplastická artróza","Posttraumatic OA":"Poúrazová artróza","AVN":"Avaskulárna nekróza","M.Perthes":"M. Perthes","RA":"Reumatoidná artritída","Fracture":"Zlomenina","Other causes":"Iné príčiny","Not ident.":"Neuvedené","Primary monocond.OA":"Primárna artróza – jeden kondyl","Primary bicond.OA":"Primárna artróza – oba kondyly","Unspecified":"Neuvedené","Secondary OA / Other diagnosis":"Sekundárna artróza a iné","Not identified":"Neuvedené"},
+  reas:{"Paraarticular Osifications":"Paraartikulárne osifikácie","Luxation":"Luxácia","Polyethylene Wear":"Opotrebenie polyetylénu","Early Infection":"Včasná infekcia","Chronic Infection":"Chronická infekcia","Acetabulary Protrusis":"Protrúzia acetabula","Aseptic Loos. of Both Comp.":"Aseptické uvoľnenie oboch komponentov","Aseptic Loos. of Acet. Comp.":"Aseptické uvoľnenie jamky","Aseptic Loos. of Fem. Comp.":"Aseptické uvoľnenie drieku","Osteolysis of Acetabulum":"Osteolýza acetabula","Osteolysis of Femur":"Osteolýza femuru","Big Bone Defect of Acetabulum":"Veľký kostný defekt acetabula","Big Bone Defect of Femur":"Veľký kostný defekt femuru","Periprosthesis Fracture":"Periprotetická zlomenina","Fracture of Implant":"Zlomenina implantátu","Spacer to THA":"Spacer na TEP","Girdlestone to THA":"Girdlestone na TEP","Other":"Iné","Aseptic Loosening of Femoral Comp.":"Aseptické uvoľnenie femorálneho komponentu","Aseptic Loosening of Tibial Comp.":"Aseptické uvoľnenie tibiálneho komponentu","Aseptic Loosening of Patellar Comp.":"Aseptické uvoľnenie patelárneho komponentu","Patellar nectrosis":"Nekróza pately","Patellar Luxation":"Luxácia pately","Patellar Pain":"Bolesť pately","Colateral Ligaments Instability":"Instabilita kolaterálnych väzov","Instability of PCL":"Instabilita zadného skríženého väzu","Stifness":"Stuhnutosť","Malposition":"Malpozícia","Knee Pain Without Loosening":"Bolesť kolena bez uvoľnenia","Spacer to TKA":"Spacer na TEP","Other causes":"Iné príčiny","Paraarticular Ossifications":"Paraartikulárne osifikácie","Acetabular Protrusio":"Protrúzia acetabula","Big Bone Defect of - 1":"Veľký kostný defekt acetabula","Big Bone Defect of - 2":"Veľký kostný defekt femuru","Patellar necrosis":"Nekróza pately","Collateral Ligaments":"Instabilita kolaterálnych väzov","Stiffness":"Stuhnutosť"}
 };
 const FIXC = {"Cemented":"var(--ink)","Uncemented":"var(--violet)","Hybrids":"var(--lime)","Reverse hybr.":"#c3c5cc"};
 const J = () => AR.j[st.joint];
@@ -1038,7 +1050,7 @@ const RNk=["","I.","II.","III.","IV.","V."];
 function renderKlbyControls(){
   const js=document.getElementById("jointSeg");
   js.innerHTML=[["hip","Bedrový kĺb"],["knee","Kolenný kĺb"]].map(([id,l])=>`<button type="button" data-j="${id}" aria-pressed="${st.joint===id}">${l}</button>`).join("");
-  js.querySelectorAll("button").forEach(b=>b.onclick=()=>{ st.joint=b.dataset.j; st.depAll=false; save(); renderAll(); });
+  js.querySelectorAll("button").forEach(b=>b.onclick=()=>{ st.joint=b.dataset.j; st.depAll=false; st.impl=null; save(); renderAll(); });
   document.getElementById("k_metric").innerHTML=Object.entries(KM).map(([id,m])=>`<button type="button" id="km-${id}" aria-pressed="${st.km===id}">${m.label}</button>`).join("");
   for(const id of Object.keys(KM)) document.getElementById("km-"+id).onclick=()=>{st.km=id;save();renderAll();};
   document.getElementById("k_year").textContent=KY;
@@ -1097,12 +1109,14 @@ function renderKlbySide(){
 
 function renderKlbyDeps(){
   const k=st.sel, oi=orthoIdx(), all=KDEP().filter(d=>(!k||d.k===k)&&d.p+d.r>0).sort((a,b)=>(b.p+b.r)-(a.p+a.r));
+  const PV=J().prev, pm=PV?Object.fromEntries(PV.dep.map(x=>[x[0],x[1]])):{};
+  const prevOf=d=>{ if(!PV) return ""; const p0=pm[d.code]; if(p0==null) return ` · v ${PV.year} nevykazovalo`; const ch=p0?(d.p/p0-1)*100:null; return ` · ${PV.year}: ${f0(p0)}${ch!=null?` (${ch>=0?"+":""}${f0(ch)} %)`:""}`; };
   const shown=st.depAll?all:all.slice(0,10), mx=Math.max(1,...all.map(d=>d.p+d.r)), tot=all.reduce((s,d)=>s+d.p,0);
   document.getElementById("k_depNote").textContent=`${jName()} · ${k?"kraj "+k:"Slovensko"} · ${KY} · ${all.length} pracovísk`;
   const lvl=d=>{ const h=d.pzs&&D.hosp.find(x=>x.c===d.pzs), v=h?.p?.[oi]; return v?`<span class="chip${v>=4?" hi":""}" title="Ortopedický program ${RNk[v]} (kategorizácia 2026)">${RNk[v]}</span>`:""; };
   document.getElementById("k_deps").innerHTML=shown.map((d,i)=>`<div class="deprow"><span class="nm"><span class="mono" style="color:var(--muted);font-size:11px;margin-right:6px">${i+1}</span>${esc(d.n)} ${lvl(d)}<small>${k?"":esc(d.k)}</small></span><span class="v">${f0(d.p)}<small> + ${f0(d.r)}</small></span>
     <span class="stack" style="height:10px;grid-column:1/-1;background:var(--tile)"><span style="width:${d.p/mx*100}%;background:var(--violet)"></span><span style="width:${d.r/mx*100}%;background:var(--orange)"></span></span>
-    <span class="meta">${f1(d.p/tot*100)} % primárnych${d.p+d.r?` · revízie ${f1(d.r/(d.p+d.r)*100)} %`:""}</span></div>`).join("");
+    <span class="meta">${f1(d.p/tot*100)} % primárnych${d.p+d.r?` · revízie ${f1(d.r/(d.p+d.r)*100)} %`:""}${prevOf(d)}</span></div>`).join("");
   const more=document.getElementById("k_depMore"); more.hidden=all.length<=10; more.textContent=st.depAll?"Zobraziť len 10 najväčších":`Zobraziť všetkých ${all.length}`;
   more.onclick=()=>{ st.depAll=!st.depAll; renderKlbyDeps(); };
 }
@@ -1163,7 +1177,22 @@ function renderKlbyReas(){
   dgRows(document.getElementById("k_reas"), R.labels.map((l,i)=>({n:KL.reas[l]||l,v:d[i],meta:`${f1(d[i]/t*100)} % (${f1(sum5[i]/t5*100)} %)`})).filter(r=>r.v>0).sort((a,c)=>c.v-a.v).slice(0,12));
 }
 
-function renderKlby(){ renderKlbyControls(); renderKlbyKpis(); renderKlbyMap(); renderKlbySide(); renderKlbyDeps(); renderKlbyTrend(); renderKlbyFix(); renderKlbyCem(); renderKlbyPat(); renderKlbyReas(); }
+function renderKlbyImpl(){
+  const I=J().impl; if(!I){ document.getElementById("k_impl").innerHTML=`<p class="note">Údaje o implantátoch sú dostupné od správy 2024.</p>`; return; }
+  const keys=Object.keys(I); if(!keys.includes(st.impl)) st.impl=keys[0];
+  const seg=document.getElementById("k_implSeg"); seg.innerHTML=keys.map(k=>`<button type="button" aria-pressed="${st.impl===k}">${k}</button>`).join("");
+  seg.querySelectorAll("button").forEach((b,i)=>b.onclick=()=>{ st.impl=keys[i]; renderKlbyImpl(); });
+  const L=I[st.impl], rows=L.rows.map(r=>({n:`${r[1]}`,v:r[2],meta:`${r[0]} · ${f1(r[2]/L.all*100)} % všetkých · revidovanosť ${f1(r[3])} % · stredné prežívanie ${f1(r[4])} r.`}));
+  document.getElementById("k_implNote").textContent=`${jName()} · Slovensko · počet implantácií ${J().pr&&Object.keys(J().pr.d)[0]}–${KY} (kumulatívne) · spolu ${f0(L.all)}`;
+  dgRows(document.getElementById("k_impl"), rows);
+  const mf={}; L.rows.forEach(r=>{ mf[r[0]]=(mf[r[0]]||0)+r[2]; }); const top=Object.values(mf).reduce((a,b)=>a+b,0);
+  const mrows=Object.entries(mf).sort((a,b)=>b[1]-a[1]).map(([n,v])=>({n,v,meta:`${f1(v/L.all*100)} % všetkých · ${L.rows.filter(r=>r[0]===n).map(r=>r[1]).join(", ")}`}));
+  if(L.all>top) mrows.push({n:"Ostatné implantáty mimo top 10",v:L.all-top,meta:`${f1((L.all-top)/L.all*100)} % všetkých · výrobca neuvedený v správe`});
+  document.getElementById("k_mfNote").textContent=`${st.impl} · ${jName()} · podiel na všetkých implantáciách ${Object.keys(J().pr.d)[0]}–${KY}, podľa 10 najpoužívanejších modelov`;
+  dgRows(document.getElementById("k_mf"), mrows);
+}
+
+function renderKlby(){ renderKlbyImpl(); renderKlbyControls(); renderKlbyKpis(); renderKlbyMap(); renderKlbySide(); renderKlbyDeps(); renderKlbyTrend(); renderKlbyFix(); renderKlbyCem(); renderKlbyPat(); renderKlbyReas(); }
 
 /* ---------- Kardiológia ---------- */
 const KD = D.kd, KDY = KD.years, KDBASE = "2019";

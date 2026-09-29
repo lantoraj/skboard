@@ -437,7 +437,76 @@ def sar():
         unknown = [d[0] for d in j["dep"] if d[0] not in SAR_DEPTS]
         if unknown:
             raise ValueError(f"SAR departments without mapping: {unknown}")
-    return {"year": year, "j": joints, "depts": {k: list(v) for k, v in SAR_DEPTS.items()}}
+    out = {"year": year, "j": joints, "depts": {k: list(v) for k, v in SAR_DEPTS.items()}}
+    xl = DATA / "sar" / "SAR_2024_dashboard_data.xlsx"
+    if xl.exists():
+        sar_2024(xl, out)
+    return out
+
+
+def sar_2024(xl, out):
+    """Overlay the 2024 SAR report (tables extracted to a workbook) on the 2023 PDF data; keep 2023 departments for comparison."""
+    long = pd.read_excel(xl, sheet_name="Long_Data")
+
+    def tab(n):
+        s = long[long.table_number == n]
+        p = s.pivot_table(index=["source_page", "source_fragment", "source_row"], columns="column_index", values="value_raw", aggfunc="first")
+        p = p.reset_index(drop=True)
+        p.columns = range(p.shape[1])
+        return p
+
+    def num(v):
+        m = re.match(r"\s*(-?\d+(?:[.,]\d+)?)", str(v))
+        return float(m.group(1).replace(",", ".")) if m else 0.0
+
+    def by_year(n, labels, year_first):
+        d = {}
+        for _, r in tab(n).iterrows():
+            vals = [str(v) for v in r.tolist()]
+            y, rest = (vals[0], vals[1:]) if year_first else (vals[-1], vals[:-1])
+            if re.fullmatch(r"\d{4}", y.strip()):
+                d[y.strip()] = [int(num(v)) for v in rest[:len(labels)]]
+        return {"labels": labels, "d": d}
+
+    def sheet_by_year(name, skip=("source_page", "source_fragment", "source_row", "Year")):
+        d = pd.read_excel(xl, sheet_name=name)
+        labels = [c for c in d.columns if c not in skip]
+        rows = {str(int(float(r.Year))): [int(num(r[c])) for c in labels]
+                for _, r in d.iterrows() if re.fullmatch(r"\d{4}(\.0)?", str(r.Year))}
+        return {"labels": labels, "d": rows}
+
+    def rr(n):
+        return [[str(r[0]).replace("Hy brids", "Hybrids"), int(num(r[1])), int(num(r[2])), num(r[3]), num(r[4])] for _, r in tab(n).iterrows() if num(r[1])]
+
+    def top(n, all_n):
+        total = int(num(tab(all_n).iloc[0][2]))
+        rows = [[" ".join(str(r[0]).split()).upper().replace("DE PUY", "DEPUY"), " ".join(str(r[1]).split()), int(num(r[2])), num(r[4]), num(r[5])] for _, r in tab(n).iterrows()]
+        return {"all": total, "rows": rows}
+
+    def depts(sheet):
+        d = pd.read_excel(xl, sheet_name=sheet)
+        return [[str(r.Department).strip(), int(r.Primary), int(r.Revision)] for r in d.itertuples() if str(r.Department).strip() != "Total"]
+
+    for key, yearly, sex, age, fix, rrn, cem_n, cem_a, reas, dsheet, diag in [
+        ("hip", 20, 26, 28, "Hip_Fixation", 48, 51, 52, "Hip_Rev_Reasons", "Hip_Facilities_2024", "hip"),
+        ("knee", 144, 150, 152, "Knee_Fixation", 171, 175, 174, "Knee_Rev_Reasons", "Knee_Facilities_2024", "knee")]:
+        j = out["j"][key]
+        prev = {"year": out["year"], "dep": j["dep"]}
+        pr = by_year(yearly, j["pr"]["labels"], False)
+        j.update(pr=pr, sex=by_year(sex, j["sex"]["labels"], False), age=by_year(age, j["age"]["labels"][:4], False),
+                 fix=sheet_by_year(fix), rr=rr(rrn), cemN=by_year(cem_n, out["j"]["hip"]["cemN"]["labels"], True),
+                 cemA=by_year(cem_a, out["j"]["hip"]["cemA"]["labels"], True), reas=sheet_by_year(reas), dep=depts(dsheet), prev=prev)
+        j["diag"] = sheet_by_year("Hip_Diagnoses") if key == "hip" else by_year(161, j["diag"]["labels"], False)
+        for dname in ("dep",):
+            unknown = [d[0] for d in j[dname] if d[0] not in SAR_DEPTS]
+            if unknown:
+                raise ValueError(f"SAR 2024 departments without mapping: {unknown}")
+        last = max(pr["d"])
+        if [sum(d[1] for d in j["dep"]), sum(d[2] for d in j["dep"])] != pr["d"][last]:
+            raise ValueError(f"SAR 2024 {key}: department totals do not match yearly totals")
+    out["j"]["hip"]["impl"] = {"Primárne jamky": top(55, 54), "Primárne drieky": top(67, 66), "Revízne jamky": top(117, 116), "Revízne drieky": top(129, 128)}
+    out["j"]["knee"]["impl"] = {"Primárne implantáty": top(177, 176), "Revízne implantáty": top(226, 225)}
+    out["year"] = "2024"
 
 
 CARDIO_DG = [("all", "Všetky diagnózy"), ("I10_15", "Hypertenzné choroby (I10–I15)"), ("I20_25", "Ischemické choroby srdca (I20–I25)"),
