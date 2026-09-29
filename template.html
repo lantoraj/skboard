@@ -187,13 +187,14 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
 <div class="wrap">
   <nav class="top" aria-label="Nastavenia">
     <div class="brand"><span class="badge">SK</span>Zdravotná sieť</div>
-    <div class="pills tabs" role="group" aria-label="Pohľad" id="tabs"><button type="button" data-tab="main">Prehľad</button><button type="button" data-tab="chir">Chirurgia</button><button type="button" data-tab="klby">Kĺbové náhrady</button><button type="button" data-tab="kardio">Kardiológia</button><button type="button" data-tab="onko">Onkológia</button></div>
+    <div class="pills tabs" role="group" aria-label="Pohľad" id="tabs"><button type="button" data-tab="main">Prehľad</button><button type="button" data-tab="chir">Chirurgia</button><button type="button" data-tab="klby">Kĺbové náhrady</button><button type="button" data-tab="kardio">Kardiológia</button><button type="button" data-tab="onko">Onkológia</button><button type="button" data-tab="eko">Ekonomika</button></div>
     <div class="topr">
       <div class="selwrap" id="specWrap"><label for="spec" style="position:absolute;left:-9999px">Odbornosť</label><select id="spec" class="specsel"></select></div>
       <div class="selwrap dx" id="dxWrap"><label for="dx" style="position:absolute;left:-9999px">Diagnóza</label><select id="dx" class="specsel dxsel"></select></div>
       <div class="selwrap dx" id="opWrap" hidden><label for="opSel" style="position:absolute;left:-9999px">Operácia</label><select id="opSel" class="specsel dxsel"></select></div>
       <div class="selwrap dx" id="kdWrap" hidden><label for="kdSel" style="position:absolute;left:-9999px">Diagnóza</label><select id="kdSel" class="specsel dxsel"></select></div>
       <div class="selwrap dx" id="onWrap" hidden><label for="onSel" style="position:absolute;left:-9999px">Diagnóza</label><select id="onSel" class="specsel dxsel"></select></div>
+      <div class="selwrap dx" id="ecWrap" hidden><label for="ecSel" style="position:absolute;left:-9999px">Segment</label><select id="ecSel" class="specsel dxsel"></select></div>
       <div class="pills" role="group" aria-label="Kĺb" id="jointSeg" hidden></div>
       <div class="pills" role="group" aria-label="Rok" id="yearSeg"></div>
     </div>
@@ -640,6 +641,68 @@ table.flow td.diag{background:var(--ink)!important;color:var(--lime);font-weight
     </ul>
   </section>
 </div>
+<div id="view-eko" class="view" hidden>
+  <header class="hero">
+    <div>
+      <div class="cap"><span class="dot"></span>NCZI · vybrané ekonomické ukazovatele v zdravotníctve</div>
+      <h1>Ekonomika<br><em>zdravotníctva.</em></h1>
+      <p class="tag" id="ec_tag"></p>
+    </div>
+    <p class="lead">Náklady, výnosy a hospodársky výsledok organizácií v zdravotníctve 2018–2024. Rozdelené na nemocnice, ambulancie a lekárne, podľa zriaďovateľa a so štruktúrou nákladov na lieky a zdravotnícke pomôcky. Segment vyberiete hore alebo kliknutím v tabuľke segmentov.</p>
+  </header>
+
+  <section class="kpis" id="ec_kpis" aria-label="Súhrn ekonomiky"></section>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Náklady a výnosy <em>v mil. €</em></h2><p class="note" id="ec_trNote" style="margin:4px 0 0"></p></div><div class="legend" id="ec_trLegend" style="margin:4px 0 0"></div></div>
+      <div style="position:relative"><svg id="ec_tr" viewBox="0 0 460 230" style="width:100%;height:auto;display:block"></svg><div class="tip" id="ec_tip1" hidden></div></div>
+      <h3 style="margin:18px 0 6px;font-size:15px">Hospodársky výsledok <em style="font-style:normal;color:var(--muted);font-weight:400">v mil. €</em></h3>
+      <div style="position:relative"><svg id="ec_hv" viewBox="0 0 460 170" style="width:100%;height:auto;display:block"></svg><div class="tip" id="ec_tip2" hidden></div></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Štruktúra <em>nákladov</em></h2><p class="note" id="ec_costNote" style="margin:4px 0 0"></p></div><div class="legend" id="ec_costLegend" style="margin:4px 0 0"></div></div>
+      <div style="position:relative;margin-bottom:10px"><svg id="ec_cost" viewBox="0 0 460 220" style="width:100%;height:auto;display:block"></svg><div class="tip" id="ec_tip3" hidden></div></div>
+      <div class="dg" id="ec_costRows"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="cardhead"><div><h2>Porovnanie <em>segmentov</em></h2><p class="note" id="ec_segNote" style="margin:4px 0 0"></p></div></div>
+    <div class="tablebox"><table class="emt" id="ec_seg"></table></div>
+  </section>
+
+  <div class="two">
+    <section class="card">
+      <div class="cardhead"><div><h2>Zdravotnícke pomôcky <em>a lieky</em></h2><p class="note" id="ec_zpNote" style="margin:4px 0 0"></p></div><div class="legend" id="ec_zpLegend" style="margin:4px 0 0"></div></div>
+      <div class="pills" role="group" aria-label="Položka" id="ec_zpItem" style="margin-bottom:10px"></div>
+      <div style="position:relative;margin-bottom:10px"><svg id="ec_zp" viewBox="0 0 460 240" style="width:100%;height:auto;display:block"></svg><div class="tip" id="ec_tip4" hidden></div></div>
+      <div class="dg" id="ec_zpRows"></div>
+    </section>
+    <section class="card">
+      <div class="cardhead"><div><h2>Štruktúra <em>výnosov</em></h2><p class="note" id="ec_revNote" style="margin:4px 0 0"></p></div><div class="legend" id="ec_revLegend" style="margin:4px 0 0"></div></div>
+      <div style="position:relative;margin-bottom:10px"><svg id="ec_rev" viewBox="0 0 460 200" style="width:100%;height:auto;display:block"></svg><div class="tip" id="ec_tip5" hidden></div></div>
+      <div class="dg" id="ec_revRows"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="cardhead"><div><h2>Podľa zriaďovateľa <em>a právnej formy</em></h2><p class="note" id="ec_ownNote" style="margin:4px 0 0"></p></div></div>
+    <div class="tablebox"><table class="emt" id="ec_own"></table></div>
+  </section>
+
+  <section style="padding-inline:4px">
+    <h2 style="margin-bottom:10px">Metodika <em>ekonomiky</em></h2>
+    <ul class="notes">
+      <li>Zdroj: NCZI, Vybrané ekonomické ukazovatele v zdravotníctve SR 2018–2024 (tabuľky T1–T3). Údaje sú z výkazov MZ SR o ekonomike organizácií v zdravotníctve E (MZ SR) 2-01, 1-04 a 3-12.</li>
+      <li>Údaje sú iba za celé Slovensko, bez členenia na kraje. Hodnoty sú v bežných cenách a nie sú očistené o infláciu (2022–2023 vysoká).</li>
+      <li>Segment určuje prevažujúca činnosť organizácie. „Všetky organizácie“ zahŕňajú aj organizácie mimo ústavnej, ambulantnej a lekárenskej starostlivosti (napr. záchranná služba, SVLZ, dopravná služba), preto sú vyššie ako súčet troch segmentov.</li>
+      <li>Hospodársky výsledok = výnosy − náklady. Výnosy zahŕňajú prevádzkové dotácie zriaďovateľa, ktoré pri fakultných nemocniciach MZ SR tvoria významnú časť.</li>
+      <li>Mzdy a odvody zahŕňajú od roku 2023 aj ostatné osobné náklady. „Ostatné náklady“ sú dopočítané ako rozdiel medzi celkovými nákladmi a uvedenými položkami (služby, materiál, hospodársko-technická správa, krv a pod.).</li>
+      <li>Tabuľka podľa zriaďovateľa nie je vyčerpávajúca: NCZI zverejňuje iba kombinácie s aspoň 3 organizáciami.</li>
+    </ul>
+  </section>
+</div>
 </div>
 
 <script>
@@ -653,7 +716,7 @@ const TYP = [["nem","Nemocnica","var(--ink)"],["pol","Poliklinika","var(--violet
 const nf = new Intl.NumberFormat("sk-SK");
 const f0 = v => v==null||isNaN(v) ? "–" : nf.format(Math.round(v)), f1 = v => v==null||isNaN(v) ? "–" : v.toLocaleString("sk-SK",{minimumFractionDigits:1,maximumFractionDigits:1});
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}, tab:"main", cy:D.sx.last, op:null, cm:"p", joint:"hip", km:"p", depAll:false, impl:null, kdg:"all", ky:D.kd.years.at(-1), kdm:"f", kh:"Spolu", og:"all", oy:D.on.ty.at(-1), om:"inc", ot:"chem"};
+let st = {g:"gastro", m:"hosp", y:LASTH, sel:null, d:null, sort:{k:"lv",dir:-1}, tab:"main", cy:D.sx.last, op:null, cm:"p", joint:"hip", km:"p", depAll:false, impl:null, kdg:"all", ky:D.kd.years.at(-1), kdm:"f", kh:"Spolu", og:"all", oy:D.on.ty.at(-1), om:"inc", ot:"chem", es:"all", ey:D.ec.years.at(-1), ei:"zp"};
 const grp = () => D.groups.find(g=>g.id===st.g);
 const ch = () => grp().ch;
 const chName = () => ch()==="ALL" ? "Všetky diagnózy" : D.chn[ch()].replace(/^[IVX]+\.\s*/,"") + (RANGE[ch()]?` (${RANGE[ch()]})`:"");
@@ -695,8 +758,8 @@ const M = {
 };
 const ZMAP={hosp:"zp",alos:"zl",mort:"zm",age:"zp",hchg:"zchg"};
 const resOk = () => !st.d || (st.d.t==="ch" && ch()==="ALL");
-try{ const s=JSON.parse(localStorage.getItem("sietSK2")||"{}"); if(D.groups.some(g=>g.id===s.g)) st.g=s.g; if(M[s.m]) st.m=s.m; if(HY.includes(s.y)) st.y=s.y; if(s.d&&D.dx[s.d.t]?.[s.d.id]) st.d=s.d; if(["chir","klby"].includes(s.tab)) st.tab=s.tab; if(["hip","knee"].includes(s.joint)) st.joint=s.joint; if(["p","n","r"].includes(s.km)) st.km=s.km; if(s.tab==="kardio") st.tab="kardio"; if(D.kd.dg.some(d=>d[0]===s.kdg)) st.kdg=s.kdg; if(D.kd.years.includes(s.ky)) st.ky=s.ky; if(["f","n","v","chg"].includes(s.kdm)) st.kdm=s.kdm; if(D.kd.hosp[s.kh]) st.kh=s.kh; if(D.sx.years.includes(s.cy)) st.cy=s.cy; if(s.tab==="onko") st.tab="onko"; if(D.on.dg.some(d=>d[0]===s.og)) st.og=s.og; if(D.on.ty.includes(s.oy)) st.oy=s.oy; if(["inc","chem","bio","onk"].includes(s.om)) st.om=s.om; if(["chem","pal","horm","bio","imu"].includes(s.ot)) st.ot=s.ot; if(s.op&&(s.op.t==="g"?D.sx.groups:D.sx.ops)[s.op.id]) st.op=s.op; if(["p","n","chg"].includes(s.cm)) st.cm=s.cm; if(!resOk()&&ZMAP[st.m]) st.m=ZMAP[st.m]; }catch(e){}
-const save=()=>{try{localStorage.setItem("sietSK2",JSON.stringify({g:st.g,m:st.m,y:st.y,d:st.d,tab:st.tab,cy:st.cy,op:st.op,cm:st.cm,joint:st.joint,km:st.km,kdg:st.kdg,ky:st.ky,kdm:st.kdm,kh:st.kh,og:st.og,oy:st.oy,om:st.om,ot:st.ot}))}catch(e){}};
+try{ const s=JSON.parse(localStorage.getItem("sietSK2")||"{}"); if(D.groups.some(g=>g.id===s.g)) st.g=s.g; if(M[s.m]) st.m=s.m; if(HY.includes(s.y)) st.y=s.y; if(s.d&&D.dx[s.d.t]?.[s.d.id]) st.d=s.d; if(["chir","klby"].includes(s.tab)) st.tab=s.tab; if(["hip","knee"].includes(s.joint)) st.joint=s.joint; if(["p","n","r"].includes(s.km)) st.km=s.km; if(s.tab==="kardio") st.tab="kardio"; if(D.kd.dg.some(d=>d[0]===s.kdg)) st.kdg=s.kdg; if(D.kd.years.includes(s.ky)) st.ky=s.ky; if(["f","n","v","chg"].includes(s.kdm)) st.kdm=s.kdm; if(D.kd.hosp[s.kh]) st.kh=s.kh; if(D.sx.years.includes(s.cy)) st.cy=s.cy; if(s.tab==="onko") st.tab="onko"; if(s.tab==="eko") st.tab="eko"; if(D.ec.seg[s.es]) st.es=s.es; if(D.ec.years.includes(s.ey)) st.ey=s.ey; if(["zp","lieky"].includes(s.ei)) st.ei=s.ei; if(D.on.dg.some(d=>d[0]===s.og)) st.og=s.og; if(D.on.ty.includes(s.oy)) st.oy=s.oy; if(["inc","chem","bio","onk"].includes(s.om)) st.om=s.om; if(["chem","pal","horm","bio","imu"].includes(s.ot)) st.ot=s.ot; if(s.op&&(s.op.t==="g"?D.sx.groups:D.sx.ops)[s.op.id]) st.op=s.op; if(["p","n","chg"].includes(s.cm)) st.cm=s.cm; if(!resOk()&&ZMAP[st.m]) st.m=ZMAP[st.m]; }catch(e){}
+const save=()=>{try{localStorage.setItem("sietSK2",JSON.stringify({g:st.g,m:st.m,y:st.y,d:st.d,tab:st.tab,cy:st.cy,op:st.op,cm:st.cm,joint:st.joint,km:st.km,kdg:st.kdg,ky:st.ky,kdm:st.kdm,kh:st.kh,og:st.og,oy:st.oy,om:st.om,ot:st.ot,es:st.es,ey:st.ey,ei:st.ei}))}catch(e){}};
 const my = () => M[st.m].years ? nearest(M[st.m].years, st.y) : st.y;
 const val = k => M[st.m].get(k, my());
 const srVal = () => M[st.m].srAvg ? M[st.m].srAvg() : M[st.m].get(SR, my());
@@ -1130,11 +1193,11 @@ function renderChirAmb(){
 
 function renderChir(){ renderChirControls(); renderChirKpis(); renderChirMap(); renderChirSide(); renderChirBars(); renderChirTrend(); renderChirOps(); renderChirTech(); renderChirDep(); renderChirJzs(); renderChirEm(); renderChirAmb(); }
 
-const VIEWS={main:{el:"view-main",hash:"",title:"Zdravotná sieť Slovenska"},chir:{el:"view-chir",hash:"#chirurgia",title:"Chirurgia · Zdravotná sieť Slovenska"},klby:{el:"view-klby",hash:"#klby",title:"Kĺbové náhrady · Zdravotná sieť Slovenska"},kardio:{el:"view-kardio",hash:"#kardiologia",title:"Kardiológia · Zdravotná sieť Slovenska"},onko:{el:"view-onko",hash:"#onkologia",title:"Onkológia · Zdravotná sieť Slovenska"}};
+const VIEWS={main:{el:"view-main",hash:"",title:"Zdravotná sieť Slovenska"},chir:{el:"view-chir",hash:"#chirurgia",title:"Chirurgia · Zdravotná sieť Slovenska"},klby:{el:"view-klby",hash:"#klby",title:"Kĺbové náhrady · Zdravotná sieť Slovenska"},kardio:{el:"view-kardio",hash:"#kardiologia",title:"Kardiológia · Zdravotná sieť Slovenska"},onko:{el:"view-onko",hash:"#onkologia",title:"Onkológia · Zdravotná sieť Slovenska"},eko:{el:"view-eko",hash:"#ekonomika",title:"Ekonomika · Zdravotná sieť Slovenska"}};
 function renderTabs(){
   for(const [id,v] of Object.entries(VIEWS)) document.getElementById(v.el).hidden = st.tab!==id;
   document.getElementById("specWrap").hidden=st.tab!=="main"; document.getElementById("dxWrap").hidden=st.tab!=="main";
-  document.getElementById("opWrap").hidden=st.tab!=="chir"; document.getElementById("jointSeg").hidden=st.tab!=="klby"; document.getElementById("kdWrap").hidden=st.tab!=="kardio"; document.getElementById("onWrap").hidden=st.tab!=="onko"; document.getElementById("yearSeg").hidden=st.tab==="klby";
+  document.getElementById("opWrap").hidden=st.tab!=="chir"; document.getElementById("jointSeg").hidden=st.tab!=="klby"; document.getElementById("kdWrap").hidden=st.tab!=="kardio"; document.getElementById("onWrap").hidden=st.tab!=="onko"; document.getElementById("ecWrap").hidden=st.tab!=="eko"; document.getElementById("yearSeg").hidden=st.tab==="klby";
   document.querySelectorAll("#tabs button").forEach(b=>{ b.setAttribute("aria-pressed",b.dataset.tab===st.tab); b.onclick=()=>{ if(st.tab===b.dataset.tab) return; st.tab=b.dataset.tab; try{ history.replaceState(null,"",VIEWS[st.tab].hash||location.pathname); }catch(e){} save(); renderAll(); window.scrollTo(0,0); }; });
   document.title = VIEWS[st.tab].title;
 }
@@ -1344,7 +1407,7 @@ function lineChart(svgId, tipId, years, series, fmt, opts={}){
     if(s.area) h+=`<path d="M${x(p[0].y)},${yv(0)} ${p.map(q=>`L${x(q.y)},${yv(q.v)}`).join(" ")} L${x(p.at(-1).y)},${yv(0)}Z" style="fill:url(#${svgId}g)"/>`;
     for(let j=0;j<p.length-1;j++) h+=`<line x1="${x(p[j].y)}" y1="${yv(p[j].v)}" x2="${x(p[j+1].y)}" y2="${yv(p[j+1].v)}" style="stroke:${s.color};stroke-width:2.2;stroke-linecap:round${s.dash?";stroke-dasharray:"+s.dash:""}"/>`;
     const sel=opts.sel&&p.find(q=>q.y===+opts.sel); if(sel) h+=`<circle cx="${x(sel.y)}" cy="${yv(sel.v)}" r="${s.area?6.5:4}" style="fill:${s.area?"var(--lime)":s.color};stroke:var(--ink);stroke-width:${s.area?1.5:0}"/>`;
-    const lp=p.at(-1), below=series.length>1&&lastV[i]<lastV[1-i]; h+=`<text x="${x(lp.y)-8}" y="${yv(lp.v)+(below?20:-11)}" style="fill:var(--ink);font:500 12px var(--mono);text-anchor:end">${fmt(lp.v)}</text>`; });
+    if(opts.noLbl) return; const lp=p.at(-1), below=series.length>1&&lastV[i]<lastV[1-i]; h+=`<text x="${x(lp.y)-8}" y="${yv(lp.v)+(below?20:-11)}" style="fill:var(--ink);font:500 12px var(--mono);text-anchor:end">${fmt(lp.v)}</text>`; });
   years.forEach(y=>h+=`<rect x="${x(+y)-14}" y="${T}" width="28" height="${H0-T-B}" style="fill:transparent" data-y="${y}" class="hit"/>`);
   svg.innerHTML=h;
   const tip=document.getElementById(tipId);
@@ -1675,8 +1738,133 @@ function renderOnkoProg(){
 
 function renderOnko(){ renderOnkoControls(); renderOnkoKpis(); renderOnkoMap(); renderOnkoSide(); renderOnkoBars(); renderOnkoTrend(); renderOnkoDg(); renderOnkoAge(); renderOnkoTreat(); renderOnkoCost(); renderOnkoRadio(); renderOnkoNm(); renderOnkoEst(); renderOnkoStaff(); renderOnkoProg(); }
 
+/* ---------- Ekonomika ---------- */
+const EC = D.ec, ECY = EC.years;
+const ECS = [["all","Všetky organizácie v zdravotníctve"],["ust","Ústavná starostlivosť spolu"],["fn","Fakultné nemocnice"],["vn","Všeobecné a špecializované nemocnice"],["lie","Liečebne"],["ost","Ostatní ústavní (kúpele, hospice, DOS)"],["amb","Ambulantná starostlivosť"],["lek","Lekárenská starostlivosť"]];
+const ECN = Object.fromEntries(ECS);
+const ecR = (s,y) => EC.seg[s]?.[y] || {};
+const ecV = (s,y,k) => ecR(s,y)[k] ?? null;
+const mil = v => v==null?"–":f0(v/1e6), mil1 = v => v==null?"–":f1(v/1e6);
+const ECC = [
+  ["pers","Mzdy a odvody","var(--ink)",r=>(r["mzdy"]||0)+(r["odvody"]||0)+(r["ostatné osobné náklady"]||0)],
+  ["lieky","Lieky","var(--violet)",r=>r["lieky"]||0],
+  ["zp","Zdravotnícke pomôcky","var(--lime)",r=>r["zdravotnícke pomôcky"]||0],
+  ["dop","Doplnkový sortiment lekární","#bcaaff",r=>r["doplnkový sortiment lekární"]||0],
+  ["odp","Odpisy","var(--orange)",r=>r["odpisy"]||0],
+  ["en","Energie","#ffc59a",r=>r["spotrebu energie"]||0],
+  ["opr","Opravy a údržba","#ddd4ff",r=>r["opravy a údržbu"]||0]
+];
+const ecCost = (r,id) => { if(id==="oth"){ const t=r["Náklady spolu"]; return t==null?null:t-ECC.reduce((s,c)=>s+c[3](r),0); } return ECC.find(c=>c[0]===id)[3](r); };
+const ECR = [["poist","Zdravotné poisťovne","var(--violet)","tržby od zdravotných poisťovní"],["obyv","Obyvateľstvo","var(--orange)","tržby od obyvateľstva"],["dot","Dotácie od zriaďovateľa","var(--lime)","prevádzkové dotácie od zriaďovateľa"],["oth","Ostatné výnosy","#c3c5cc","ostatné výnosy"]];
+const ECI = [["ukončené hospitalizačné prípady v zmysle DRG","Hospitalizácie podľa DRG"],["ukončené hospitalizácie","Hospitalizácie mimo DRG"],["ošetrovacie dni","Ošetrovacie dni"],["pripočítateľné položky","Pripočítateľné položky"],["výkony vrátane jednodňovej ZS","Výkony vrátane jednodňovej ZS"],["body","Body (výkony)"],["kapitáciu/paušál","Kapitácia a paušál"],["pobyt v stacionári","Pobyt v stacionári"]];
+const ecDelta = (a,b,base) => { if(a==null||!b) return `<span class="delta flat">–</span>`; const d=(a/Math.abs(b)-1)*100*(b<0?-1:1); if(Math.abs(d)<0.5) return `<span class="delta flat">±0 %</span>`; return `<span class="delta ${d>0?"up":"down"}" title="Zmena oproti ${base}">${d>0?"▲ +":"▼ "}${f1(d)} %</span>`; };
+
+function renderEkoControls(){
+  const sel=document.getElementById("ecSel");
+  if(!sel.options.length){ sel.innerHTML=ECS.map(([id,n])=>`<option value="${id}">${["fn","vn","lie","ost"].includes(id)?"↳ ":""}${esc(n)}</option>`).join(""); sel.onchange=()=>{ st.es=sel.value; save(); renderAll(); }; }
+  sel.value=st.es;
+  const ys=document.getElementById("yearSeg"); ys.innerHTML="";
+  for(const y of ECY){ const b=document.createElement("button"); b.type="button"; b.textContent=y; b.setAttribute("aria-pressed",st.ey===y); b.onclick=()=>{st.ey=y;save();renderAll();}; ys.appendChild(b); }
+  document.getElementById("ec_tag").textContent=ECN[st.es];
+}
+
+function renderEkoKpis(){
+  const s=st.es, y=st.ey, b=ECY[0], r=ecR(s,y), r0=ecR(s,b), hv=r["Hospodársky výsledok"], rev=r["Výnosy spolu"];
+  const zp=ecCost(r,"zp"), lk=ecCost(r,"lieky"), n=r["Počet organizácií"];
+  const dl=(a,c)=>y===b?`<span class="delta flat">základ</span>`:ecDelta(a,c,b);
+  const tiles=[
+    ["Náklady spolu",`${mil(r["Náklady spolu"])}<small> mil. €</small>`,dl(r["Náklady spolu"],r0["Náklady spolu"]),`${f0(n)} organizácií · <b>${f1(r["Náklady spolu"]/n/1e6)}</b> mil. € na organizáciu`],
+    ["Hospodársky výsledok",`<span style="color:${hv<0?"var(--down)":"inherit"}">${hv>0?"+":""}${mil(hv)}</span><small> mil. €</small>`,`<span class="delta flat">${b}: ${mil(r0["Hospodársky výsledok"])}</span>`,`<b>${f1(hv/rev*100)} %</b> z výnosov · výnosy ${mil(rev)} mil. €`],
+    ["Zdravotnícke pomôcky",`${mil(zp)}<small> mil. €</small>`,dl(zp,ecCost(r0,"zp")),`<b>${f1(zp/r["Náklady spolu"]*100)} %</b> nákladov segmentu`],
+    ["Lieky",`${mil(lk)}<small> mil. €</small>`,dl(lk,ecCost(r0,"lieky")),`<b>${f1(lk/r["Náklady spolu"]*100)} %</b> nákladov · mzdy a odvody ${f1(ecCost(r,"pers")/r["Náklady spolu"]*100)} %`]
+  ];
+  document.getElementById("ec_kpis").innerHTML=`<div class="cap" style="grid-column:1/-1;margin:-2px 0 -4px 4px">${esc(ECN[s])} · Slovensko · ${y}${y!==b?" · zmena oproti "+b:""} · bežné ceny</div>`+tiles.map(t=>`<div class="kpi"><div class="row"><span class="cap">${t[0]}</span>${t[2]}</div><div class="v">${t[1]}</div><div class="sub">${t[3]}</div></div>`).join("");
+}
+
+function hvBars(svgId, tipId, years, get, sel){
+  const svg=document.getElementById(svgId), W=460, H0=+svg.getAttribute("viewBox").split(" ")[3], L=48,R=12,T=16,B=26;
+  const vals=years.map(get), mx=Math.max(1,...vals.map(v=>Math.abs(v||0))), lo=Math.min(0,...vals)<0?-mx:0, hi=Math.max(0,...vals)>0?mx:0;
+  const bw=(W-L-R)/years.length, x=i=>L+i*bw, yv=v=>T+(hi-v)/((hi-lo)||1)*(H0-T-B);
+  let h=`<line x1="${L}" x2="${W-R}" y1="${yv(0)}" y2="${yv(0)}" style="stroke:var(--ink2)"/><text x="${L-8}" y="${yv(0)+4}" style="fill:var(--muted);font:11px var(--mono);text-anchor:end">0</text>`;
+  years.forEach((y,i)=>{ const v=vals[i]||0, top=Math.min(yv(v),yv(0)), hh=Math.abs(yv(v)-yv(0));
+    h+=`<rect x="${x(i)+bw*.18}" y="${top}" width="${bw*.64}" height="${Math.max(1,hh)}" rx="3" style="fill:${v<0?"var(--orange)":y===sel?"var(--ink)":"var(--violet)"}"/>`;
+    h+=`<text x="${x(i)+bw/2}" y="${v<0?yv(v)+13:yv(v)-5}" style="fill:var(--ink);font:500 11px var(--mono);text-anchor:middle">${v>0?"+":""}${f0(v/1e6)}</text>`;
+    h+=`<text x="${x(i)+bw/2}" y="${H0-6}" style="fill:${y===sel?"var(--ink)":"var(--muted)"};font:${y===sel?"600 ":""}10px var(--mono);text-anchor:middle">${y}</text>`;
+    h+=`<rect x="${x(i)}" y="${T}" width="${bw}" height="${H0-T-B}" style="fill:transparent" data-i="${i}" class="hit"/>`; });
+  svg.innerHTML=h;
+  const tip=document.getElementById(tipId);
+  svg.querySelectorAll(".hit").forEach(r=>{ const i=+r.dataset.i; r.onmousemove=e=>tipAt(tip,svg.parentElement,e,`<div style="font-weight:600;margin-bottom:2px">${years[i]}</div>Hospodársky výsledok: <b>${mil1(vals[i])} mil. €</b>`,220); r.onmouseleave=()=>tip.hidden=true; clickable(r,()=>{st.ey=years[i];save();renderAll();}); });
+}
+
+function renderEkoTrend(){
+  const s=st.es;
+  document.getElementById("ec_trNote").textContent=`${ECN[s]} · ${ECY[0]}–${ECY.at(-1)} · bežné ceny`;
+  const series=[{name:"Výnosy",color:"var(--violet)",area:true,vals:y=>ecV(s,y,"Výnosy spolu")/1e6},{name:"Náklady",color:"var(--ink)",vals:y=>ecV(s,y,"Náklady spolu")/1e6}];
+  document.getElementById("ec_trLegend").innerHTML=series.map(x=>`<span><i style="background:${x.color};height:4px;width:16px"></i>${x.name}</span>`).join("");
+  lineChart("ec_tr","ec_tip1",ECY,series,f0,{sel:st.ey,onPick:y=>{st.ey=y;save();renderAll();}});
+  hvBars("ec_hv","ec_tip2",ECY,y=>ecV(s,y,"Hospodársky výsledok"),st.ey);
+}
+
+function renderEkoCost(){
+  const s=st.es, y=st.ey, b=ECY[0], r=ecR(s,y), r0=ecR(s,b), tot=r["Náklady spolu"];
+  const cats=[...ECC.map(c=>[c[0],c[1],c[2]]),["oth","Ostatné náklady","#c3c5cc"]].filter(([id])=>ECY.some(yy=>ecCost(ecR(s,yy),id)>0));
+  document.getElementById("ec_costNote").textContent=`${ECN[s]} · mil. € · ${y}: spolu ${mil(tot)} mil. €`;
+  document.getElementById("ec_costLegend").innerHTML=cats.map(([,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("");
+  stackCols("ec_cost","ec_tip3",ECY,cats.slice().reverse().map(([id,n,c])=>({n,c,v:yy=>(ecCost(ecR(s,yy),id)||0)/1e6})));
+  dgRows(document.getElementById("ec_costRows"), cats.map(([id,n])=>{ const v=ecCost(r,id), v0=ecCost(r0,id); return {n:`${n} (mil. €)`,v:(v||0)/1e6,meta:`${f1(v/tot*100)} % nákladov${v0&&y!==b?` · ${b}→${y}: ${v>=v0?"+":""}${f0((v/v0-1)*100)} %`:""}`}; }).filter(x=>x.v>0).sort((a,c)=>c.v-a.v));
+}
+
+function renderEkoSeg(){
+  const y=st.ey, b=ECY[0];
+  document.getElementById("ec_segNote").textContent=`Slovensko · ${y} · mil. € · kliknutím na riadok vyberiete segment · zmena ZP oproti ${b}`;
+  const cols=["Segment","Organizácie","Náklady","Výnosy","Výsledok","Marža","Mzdy a odvody","Lieky","ZP","ZP mil. €"];
+  document.getElementById("ec_seg").innerHTML=`<thead><tr>${cols.map((c,i)=>`<th style="cursor:default;${i?"text-align:right":""}">${c}</th>`).join("")}</tr></thead><tbody>`+
+    ECS.map(([id,n])=>{ const r=ecR(id,y), t=r["Náklady spolu"], hv=r["Hospodársky výsledok"], zp=ecCost(r,"zp"), zp0=ecCost(ecR(id,b),"zp"), sub=["fn","vn","lie","ost"].includes(id);
+      return `<tr data-s="${id}" style="cursor:pointer;${st.es===id?"background:var(--tile);box-shadow:inset 3px 0 0 var(--lime)":""}"><td style="${sub?"padding-left:22px;color:var(--ink2)":"font-weight:600"}">${sub?"↳ ":""}${esc(n)}</td>
+      <td class="c" style="text-align:right;font-family:var(--mono)">${f0(r["Počet organizácií"])}</td><td class="c" style="text-align:right;font-family:var(--mono)">${mil(t)}</td><td class="c" style="text-align:right;font-family:var(--mono)">${mil(r["Výnosy spolu"])}</td>
+      <td class="c" style="text-align:right;font-family:var(--mono);color:${hv<0?"var(--down)":"var(--up)"}">${hv>0?"+":""}${mil1(hv)}</td><td class="c" style="text-align:right;font-family:var(--mono)">${f1(hv/r["Výnosy spolu"]*100)} %</td>
+      <td class="c" style="text-align:right;font-family:var(--mono)">${f0(ecCost(r,"pers")/t*100)} %</td><td class="c" style="text-align:right;font-family:var(--mono)">${f0(ecCost(r,"lieky")/t*100)} %</td><td class="c" style="text-align:right;font-family:var(--mono)">${f1(zp/t*100)} %</td>
+      <td class="c" style="text-align:right;font-family:var(--mono)">${f0(zp/1e6)}${zp0&&y!==b?` <span style="color:var(--muted);font-size:11px">${zp>=zp0?"+":""}${f0((zp/zp0-1)*100)} %</span>`:""}</td></tr>`; }).join("")+`</tbody>`;
+  document.querySelectorAll("#ec_seg tbody tr").forEach(tr=>clickable(tr,()=>{ st.es=tr.dataset.s; save(); renderAll(); }));
+}
+
+function renderEkoZp(){
+  const it=st.ei==="lieky"?"lieky":"zp", y=st.ey, b=ECY[0], name=it==="zp"?"Zdravotnícke pomôcky":"Lieky";
+  document.getElementById("ec_zpItem").innerHTML=[["zp","Zdravotnícke pomôcky"],["lieky","Lieky"]].map(([id,n])=>`<button type="button" data-i="${id}" aria-pressed="${it===id}">${n}</button>`).join("");
+  document.querySelectorAll("#ec_zpItem button").forEach(bt=>bt.onclick=()=>{ st.ei=bt.dataset.i; save(); renderEkoZp(); });
+  const S=[["fn","Fakultné nemocnice","var(--ink)"],["vn","Všeob. a špecializ. nemocnice","var(--violet)"],["amb","Ambulancie","var(--orange)"],["lek","Lekárne","#bcaaff"]];
+  document.getElementById("ec_zpNote").textContent=`${name} · náklady v mil. € podľa segmentu · Slovensko`;
+  document.getElementById("ec_zpLegend").innerHTML=S.map(([,n,c])=>`<span><i style="background:${c};height:4px;width:16px"></i>${n}</span>`).join("");
+  lineChart("ec_zp","ec_tip4",ECY,S.map(([id,n,c])=>({name:n,color:c,vals:yy=>ecCost(ecR(id,yy),it)/1e6})),f0,{sel:y,noLbl:true,onPick:yy=>{st.ey=yy;save();renderAll();}});
+  const all=ecCost(ecR("all",y),it);
+  dgRows(document.getElementById("ec_zpRows"), ECS.filter(([id])=>id!=="all"&&id!=="ust").map(([id,n])=>{ const r=ecR(id,y), v=ecCost(r,it), v0=ecCost(ecR(id,b),it), o=r["Počet organizácií"]; return {id,n:`${n} (mil. €)`,v:v/1e6,meta:`${f1(v/all*100)} % z SR · ${f1(v/r["Náklady spolu"]*100)} % nákladov segmentu${o?` · ${f0(v/o/1000)} tis. € na organizáciu`:""}${v0&&y!==b?` · ${b}→${y}: ${v>=v0?"+":""}${f0((v/v0-1)*100)} %`:""}`}; }).filter(x=>x.v>0).sort((a,c)=>c.v-a.v),
+    r=>{ st.es=r.id; save(); renderAll(); }, r=>st.es===r.id);
+}
+
+function renderEkoRev(){
+  const s=st.es, y=st.ey, b=ECY[0], r=ecR(s,y), r0=ecR(s,b), tot=r["Výnosy spolu"];
+  document.getElementById("ec_revNote").textContent=`${ECN[s]} · mil. € · ${y}: spolu ${mil(tot)} mil. € · pod grafom platby poisťovní a obyvateľstva`;
+  document.getElementById("ec_revLegend").innerHTML=ECR.map(([,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("");
+  stackCols("ec_rev","ec_tip5",ECY,ECR.slice().reverse().map(([,n,c,k])=>({n,c,v:yy=>(ecV(s,yy,k)||0)/1e6})));
+  const rows=ECR.map(([,n,,k])=>({n:`${n} (mil. €)`,v:(r[k]||0)/1e6,meta:`${f1((r[k]||0)/tot*100)} % výnosov${r0[k]&&y!==b?` · ${b}→${y}: ${r[k]>=r0[k]?"+":""}${f0((r[k]/r0[k]-1)*100)} %`:""}`}));
+  const ins=r["tržby od zdravotných poisťovní"];
+  for(const [k,n] of ECI) if(r[k]>0) rows.push({n:`↳ poisťovne: ${n}`,v:r[k]/1e6,meta:`${f1(r[k]/ins*100)} % platieb poisťovní`});
+  for(const [k,n] of [["obyv za lieky","lieky"],["obyv z toho za lieky","lieky"],["obyv za zdravotnícke pomôcky","zdravotnícke pomôcky"],["obyv za doplnkový sortiment lekární","doplnkový sortiment"]]) if(r[k]>0) rows.push({n:`↳ obyvateľstvo: ${n}`,v:r[k]/1e6,meta:`${f1(r[k]/r["tržby od obyvateľstva"]*100)} % platieb obyvateľstva`});
+  dgRows(document.getElementById("ec_revRows"), rows.filter(x=>x.v>0));
+}
+
+function renderEkoOwn(){
+  const y=st.ey, O=EC.own[y]||{}, b=ECY[0];
+  document.getElementById("ec_ownNote").textContent=`Slovensko · ${y} · mil. € · iba kombinácie s aspoň 3 organizáciami · zoradené podľa nákladov`;
+  const rows=Object.entries(O).sort((a,c)=>(c[1][1]||0)-(a[1][1]||0));
+  document.getElementById("ec_own").innerHTML=`<thead><tr>${["Zriaďovateľ","Právna forma","Organizácie","Náklady","Výnosy","Výsledok","Marža",`Výsledok ${b}`].map((c,i)=>`<th style="cursor:default;${i>1?"text-align:right":""}">${c}</th>`).join("")}</tr></thead><tbody>`+
+    rows.map(([k,v])=>{ const [z,f]=k.split(" – "), hv=v[3], p=EC.own[b]?.[k]; return `<tr><td style="font-weight:600">${esc(z==="iný zriaďovateľ"?"súkromný / iný":z)}</td><td>${esc(f||"")}</td><td class="c" style="text-align:right;font-family:var(--mono)">${f0(v[0])}</td><td class="c" style="text-align:right;font-family:var(--mono)">${mil1(v[1])}</td><td class="c" style="text-align:right;font-family:var(--mono)">${mil1(v[2])}</td><td class="c" style="text-align:right;font-family:var(--mono);color:${hv<0?"var(--down)":"var(--up)"}">${hv>0?"+":""}${mil1(hv)}</td><td class="c" style="text-align:right;font-family:var(--mono)">${v[2]?f1(hv/v[2]*100)+" %":"–"}</td><td class="c" style="text-align:right;font-family:var(--mono);color:var(--muted)">${p?(p[3]>0?"+":"")+mil1(p[3]):"–"}</td></tr>`; }).join("")+`</tbody>`;
+}
+
+function renderEko(){ renderEkoControls(); renderEkoKpis(); renderEkoTrend(); renderEkoCost(); renderEkoSeg(); renderEkoZp(); renderEkoRev(); renderEkoOwn(); }
+
 function select(k){ st.sel = st.sel===k ? null : k; renderAll(); }
-function renderAll(){ renderTabs(); if(st.tab==="chir"){ renderChir(); return; } if(st.tab==="klby"){ renderKlby(); return; } if(st.tab==="kardio"){ renderKardio(); return; } if(st.tab==="onko"){ renderOnko(); return; } renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
-try{ if(location.hash==="#chirurgia") st.tab="chir"; if(location.hash==="#klby") st.tab="klby"; if(location.hash==="#kardiologia") st.tab="kardio"; if(location.hash==="#onkologia") st.tab="onko"; }catch(e){}
+function renderAll(){ renderTabs(); if(st.tab==="chir"){ renderChir(); return; } if(st.tab==="klby"){ renderKlby(); return; } if(st.tab==="kardio"){ renderKardio(); return; } if(st.tab==="onko"){ renderOnko(); return; } if(st.tab==="eko"){ renderEko(); return; } renderControls(); renderKpis(); renderMap(); renderSide(); renderBars(); renderTrend(); renderDg(); renderAge(); renderFlow(); renderTable(); }
+try{ if(location.hash==="#chirurgia") st.tab="chir"; if(location.hash==="#klby") st.tab="klby"; if(location.hash==="#kardiologia") st.tab="kardio"; if(location.hash==="#onkologia") st.tab="onko"; if(location.hash==="#ekonomika") st.tab="eko"; }catch(e){}
 renderAll();
 </script>

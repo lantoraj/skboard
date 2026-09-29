@@ -754,6 +754,61 @@ def oncology():
             "organ": organ, "pet": pet, "ther": ther, "nvis": nvis, "staff": staff}
 
 
+def economy():
+    """NCZI Vybrané ekonomické ukazovatele v zdravotníctve SR (costs, revenues, results) 2018+."""
+    lab = lambda s: " ".join(str(s).split()).rstrip(" (€)").strip()
+
+    def table(f, sheet):
+        d = pd.read_excel(f, sheet_name=sheet, header=None)
+        h = next(i for i, r in enumerate(d.values) if str(r[0]).startswith("Počet organiz"))
+        cols = {}
+        for j in range(1, d.shape[1]):
+            name = str(d.iat[h - 1, j]).strip()
+            if name == "nan":
+                name = str(d.iat[h - 2, j]).strip()
+            if name == "nan":
+                continue
+            name = " ".join(name.split())
+            rows, prefix = {}, ""
+            for i in range(h, d.shape[0]):
+                k = lab(d.iat[i, 0])
+                if k in ("nan", "") or k.startswith(("1)", "2)")):
+                    continue
+                if k.startswith("z toho") or k == "z toho na":
+                    if k in ("z toho na", "z toho za"):
+                        continue
+                if k.startswith("tržby od obyvateľstva"):
+                    prefix = "obyv "
+                elif k.startswith(("prevádzkové dotácie", "ostatné výnosy", "Hospodársky")):
+                    prefix = ""
+                key = (prefix + k) if prefix and k.startswith(("za ", "z toho za", "iné")) else k
+                key = {"výkony vrátane jednodňovej zdravotnej starostlivosti": "výkony vrátane jednodňovej ZS",
+                       "ukončené hospitalizačné prípady v zmysle DRG 1": "ukončené hospitalizačné prípady v zmysle DRG"}.get(key, key)
+                v = num(d.iat[i, j])
+                if v is not None:
+                    rows[key] = round(v)
+            cols[name] = rows
+        return cols
+
+    out = {"years": [], "seg": {}, "own": {}}
+    for f in sorted((DATA / "nczi_ekonomika").glob("Vybrane_ekonomicke_ukazovatele_v_zdravotnictve_SR_*.xlsx")):
+        y = f.stem[-4:]
+        out["years"].append(y)
+        t1, t2, t3 = table(f, "T1"), table(f, "T2"), table(f, "T3")
+        seg = out["seg"]
+        seg.setdefault("all", {})[y] = t1.pop("Slovenská republika")
+        seg.setdefault("ust", {})[y] = t2["Spolu"]
+        for key, name in [("fn", "fakultné nemocnice"), ("vn", "všeobecné a špecializované nemocnice"), ("lie", "liečebne"), ("ost", "ostatní ústavní PZS 2)")]:
+            seg.setdefault(key, {})[y] = t2[name]
+        seg.setdefault("amb", {})[y] = t3["ambulantná zdravotná starostlivosť"]
+        seg.setdefault("lek", {})[y] = t3["lekárenská starostlivosť"]
+        out["own"][y] = {k: [v.get("Počet organizácií"), v.get("Náklady spolu"), v.get("Výnosy spolu"), v.get("Hospodársky výsledok")] for k, v in t1.items()}
+        s = seg["all"][y]
+        assert abs(s["Náklady spolu"] + s["Hospodársky výsledok"] - s["Výnosy spolu"]) < 1e4, y
+        print(f"  economy {y}: costs {s['Náklady spolu'] / 1e9:.2f} bn €, result {s['Hospodársky výsledok'] / 1e6:.0f} mil. €")
+    return out
+
+
 def main():
     stats, years = network()
     hosp, groups = hospitals()
@@ -763,8 +818,9 @@ def main():
     ar = sar()
     kd = cardiology()
     on = oncology()
+    ec = economy()
     data = {"groups": groups, "stats": stats, "hosp": hosp, "shapes": shapes(), "years": years,
-            "hs": hs, "popY": pop, "flows": flows, "chn": chn, "dg": dg, "dx": dx, "sx": sx, "ar": ar, "kd": kd, "on": on, "hyears": sorted(pop)}
+            "hs": hs, "popY": pop, "flows": flows, "chn": chn, "dg": dg, "dx": dx, "sx": sx, "ar": ar, "kd": kd, "on": on, "ec": ec, "hyears": sorted(pop)}
     page = (ROOT / "template.html").read_text(encoding="utf-8").replace("__DATA__", json.dumps(data, ensure_ascii=False, separators=(",", ":")))
     # template.html is an artifact body; a standalone host needs the document shell (charset!) around it
     head_end = page.index("</style>") + len("</style>")
